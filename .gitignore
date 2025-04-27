@@ -1,0 +1,68 @@
+# .NET Core
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+*.user
+*.suo
+*.cache
+*.log
+.vs/
+
+# Local configuration
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Production.json
+
+# Temporary files
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+
+# User-specific files
+*.userprefs
+*.usertasks
+
+# Rider
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+.history/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# NuGet Packages
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+**/packages/*
+# except build/, which is used as an MSBuild target.
+!**/packages/build/
+
+# Secrets
+*.pfx
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+publish/
+
+# Large binary files
+*.mp4
+*.rar
+*.zip
+*.7z
+*.tar
+*.gz 
