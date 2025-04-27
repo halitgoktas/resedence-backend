@@ -12,6 +12,9 @@ namespace ResidenceManagement.Core.Entities.Identity
         // Kullanıcı adı (login için)
         public string KullaniciAdi { get; set; }
         
+        // Username - İngilizce kullanıcı adı (API uyumluluğu için)
+        public string Username { get => KullaniciAdi; set => KullaniciAdi = value; }
+        
         // E-posta adresi
         public string Email { get; set; }
         
@@ -26,6 +29,12 @@ namespace ResidenceManagement.Core.Entities.Identity
         
         // Tam ad (Ad + Soyad)
         public string TamAd => $"{Ad} {Soyad}";
+
+        // FirstName - İngilizce ad (API uyumluluğu için)
+        public string FirstName { get => Ad; set => Ad = value; }
+
+        // LastName - İngilizce soyad (API uyumluluğu için)
+        public string LastName { get => Soyad; set => Soyad = value; }
         
         // Şifre (hash'lenmiş olarak saklanır)
         public string Sifre { get; set; }
@@ -48,6 +57,9 @@ namespace ResidenceManagement.Core.Entities.Identity
         // E-posta doğrulama durumu
         public bool EmailDogrulandiMi { get; set; }
         
+        // PhoneNumber - İngilizce telefon (API uyumluluğu için)
+        public string PhoneNumber { get => Telefon; set => Telefon = value; }
+
         // Navigation Properties
         // Kullanıcının bağlı olduğu firma
         public virtual Firma Firma { get; set; }

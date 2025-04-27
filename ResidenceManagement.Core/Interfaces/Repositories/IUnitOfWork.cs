@@ -15,6 +15,7 @@ namespace ResidenceManagement.Core.Interfaces.Repositories
         // Transaction işlemleri
         Task<int> Complete();
         Task<int> CompleteWithTransaction();
+        Task<int> SaveChangesAsync();
         void BeginTransaction();
         void CommitTransaction();
         void RollbackTransaction();

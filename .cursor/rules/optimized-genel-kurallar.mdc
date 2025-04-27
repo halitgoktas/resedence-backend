@@ -1,0 +1,471 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Residence Manager - Kapsamlı Yazılım Geliştirme Standartları
+
+Bu dokümantasyon, SQL Server, C# (.NET) ve React.js ile Clean Architecture/Onion Architecture prensiplerine dayalı geliştirme yaparken uyulması gereken teknik standartları içerir. Tüm geliştirme, refaktör ve bakım işlemleri bu standartlara bağlı kalmalıdır.
+
+## 1. Mimari ve Tasarım İlkeleri
+
+- **Katmanlı Mimari**: Backend için Clean Architecture / Onion Architecture prensiplerine uygun yapı oluştur:
+  - Core (Entities, Interfaces, DTOs, Domain Services)
+  - Application (Use Cases, Application Services, Validators)
+  - Infrastructure (DB, External Services, Implementations)
+  - Presentation (API Controllers, Filters, Middlewares)
+
+- **Bağımlılık Yönetimi**:
+  - Bağımlılıklar her zaman daha içteki katmanlara doğru olmalı
+  - Domain katmanı hiçbir dış katmana bağımlı olmamalı
+  - Dependency Injection ile gevşek bağlaşma (loose coupling) sağlanmalı
+  - Interface'ler ile servis soyutlaması yaratılmalı
+
+- **SOLID Prensipleri**:
+  - Single Responsibility: Her sınıf/modül tek bir sorumluluk taşımalı
+  - Open/Closed: Sınıflar değişikliğe kapalı, genişletmeye açık olmalı
+  - Liskov Substitution: Alt sınıflar üst sınıfların yerine geçebilmeli
+  - Interface Segregation: İstemciler kullanmadıkları metodlara bağımlı olmamalı
+  - Dependency Inversion: Soyutlamalara bağımlı olunmalı, somut implementasyonlara değil
+
+## 2. Backend (.NET Core) Geliştirme Standartları
+
+### 2.1 Proje Yapısı ve Organizasyon
+
+- **Çözüm Yapısı**:
+  ```
+  ResidenceManagement/
+  ├── ResidenceManagement.Domain (Core katmanı)
+  │   ├── Entities/
+  │   ├── Interfaces/
+  │   ├── DTOs/
+  │   ├── Enums/
+  │   ├── Exceptions/
+  │   └── ValueObjects/
+  ├── ResidenceManagement.Application
+  │   ├── Services/
+  │   ├── Interfaces/
+  │   ├── Validators/
+  │   ├── MappingProfiles/
+  │   └── Behaviors/ (Cross-cutting concerns)
+  ├── ResidenceManagement.Infrastructure
+  │   ├── Data/
+  │   │   ├── Context/
+  │   │   ├── Repositories/
+  │   │   ├── Migrations/
+  │   │   └── Configurations/
+  │   ├── Services/
+  │   ├── Security/
+  │   └── Logging/
+  └── ResidenceManagement.API
+      ├── Controllers/
+      ├── Middlewares/
+      ├── Extensions/
+      ├── Filters/
+      └── Configuration/
+  ```
+
+- **Asenkron Programlama**: 
+  - I/O bound işlemler için her zaman asenkron metotlar kullan
+  - Task, Task<T> ve ValueTask<T> dönüş tiplerini doğru şekilde kullan
+  - ConfigureAwait(false) kalıbını library kodlarında kullan
+  - CancellationToken'ları tüm uzun süren işlemlere geçir
+
+### 2.2 Veritabanı ve ORM Kullanımı
+
+- **Entity Framework Core Optimizasyonları**:
+  - Change tracking'i gerektiğinde etkisizleştir (AsNoTracking())
+  - Kullanılacak alanlar için Projection (Select) kullan
+  - N+1 problem için Include/ThenInclude veya koleksiyon yükleme stratejilerini optimize et
+  - Soft Delete için global query filtreleri kullan
+  - Büyük datasetler için pagination zorunlu olmalı
+
+- **Veritabanı Tasarımı**:
+  - İlişkiler düzgün tanımlanmalı (Cascade, Restrict, SetNull)
+  - İndeksler arama, filtreleme, sıralama gibi sık kullanılan alanlara uygulanmalı
+  - Veritabanı nesneleri için uygun tipler kullanılmalı (örn. metin için nvarchar(MAX) yerine uygun uzunluk)
+  - Multi-tenant mimarisi için DbContext seviyesinde global query filtreleri eklenecek
+
+- **Migration Stratejisi**:
+  - Migrationlar küçük, açıklayıcı ve geri alınabilir olmalı
+  - Üretim veri kaybı önlemleri alınmalı (örn. yeni kolon eklemeden önce var olan kolonun silinmemesi)
+  - Migrationlar CI/CD pipeline içinde otomatik uygulanacak şekilde yapılandırılmalı
+
+### 2.3 API Tasarımı ve İmplementasyonu
+
+- **RESTful Endpoint Standartları**:
+  - Resource-oriented URL yapısı (`/api/v1/residences/{id}/apartments`)
+  - HTTP metodlarının doğru kullanımı (GET, POST, PUT, PATCH, DELETE)
+  - Tutarlı API response yapısı, hata kodları ve mesajlar
+  - 200, 201, 204, 400, 401, 403, 404, 500 status kodlarının uygun kullanımı
+
+- **API Versiyonlama**:
+  - URL path versiyonlama (`/api/v1/` veya `/api/v2/`)
+  - API backward compatibility için sözleşme kuralları
+  - Deprecated API'ler için uyarı header'larının eklenmesi
+
+- **Controller Tasarımı**:
+  - İnce controller prensibi (business logic servislerde olmalı)
+  - Endpoint'ler için ayrı Request/Response DTO'ları
+  - ActionResult<T> dönüş tipi ile tutarlı API yanıtları
+  - Route ve HTTP metodlarının açık şekilde belirtilmesi
+
+- **Belgeleme ve Dokümantasyon**:
+  - Swagger/OpenAPI entegrasyonu
+  - XML yorum satırları ile endpoint dokümantasyonu
+  - Örnek request/response modellerinin oluşturulması
+
+### 2.4 Güvenlik
+
+- **Kimlik Doğrulama ve Yetkilendirme**:
+  - JWT yapılandırması (issuer, audience, expiration, signing key)
+  - Refresh token implementasyonu (secure, http-only)
+  - Rol ve policy tabanlı yetkilendirme
+  - Claims-based identity yönetimi
+  - API koruma (rate limiting, API key)
+
+- **Veri Güvenliği**:
+  - Hassas verilerin şifrelenmesi (AES-256, salt algoritmaları)
+  - Kişisel verilerin KVKK/GDPR uyumlu işlenmesi
+  - API girdilerinin validasyonu (FluentValidation)
+  - SQL injection, XSS, CSRF önlemleri
+  - HTTPS zorunluluğu ve güvenli header yapılandırması
+
+## 3. Frontend (React) Geliştirme Standartları
+
+### 3.1 Proje Yapısı ve Organizasyon
+
+- **Atomic Design Prensipleri**:
+  ```
+  src/
+  ├── api/ (API istek fonksiyonları)
+  ├── assets/ (statik dosyalar)
+  ├── components/
+  │   ├── atoms/ (temel UI elementleri)
+  │   ├── molecules/ (atom kombinasyonları)
+  │   ├── organisms/ (form, card vb. karmaşık yapılar)
+  │   ├── templates/ (sayfa şablonları)
+  │   └── pages/ (route bağlantılı tam sayfalar)
+  ├── context/ (React Context API ile state yönetimi)
+  ├── hooks/ (reusable mantıklar)
+  ├── utils/ (yardımcı fonksiyonlar)
+  ├── styles/ (global stillendirme)
+  ├── types/ (TypeScript tip tanımları)
+  └── config/ (ortam değişkenleri ve yapılandırma)
+  ```
+
+- **Modern React Pratikleri**:
+  - Functional Component yapısının kullanımı
+  - React Hooks API'sinin etkin kullanımı
+  - Prop drilling yerine Context API veya state yönetim çözümleri
+  - Component bölünmesi ve reusability prensipleri
+  - Code splitting ve lazy loading
+
+### 3.2 Performans Optimizasyonları
+
+- **Render Optimizasyonu**:
+  - React.memo() ile gereksiz renderlama engellenecek
+  - useCallback() ve useMemo() kullanılarak fonksiyon ve değer önbelleğe alınacak
+  - Virtual List kullanımı (büyük listeler için)
+  - Reselect ile Redux selector memoizasyonu
+
+- **Bundle Optimizasyonu**:
+  - Code splitting ve dynamic import
+  - Tree-shaking imkanı sağlayan import yazımı
+  - Vendor chunk oluşturma
+  - Webpack Bundle Analyzer ile paket boyutu optimizasyonu
+  - Görsel optimizasyonu (WebP, responsive images)
+
+### 3.3 State Yönetimi
+
+- **Local State**:
+  - useState() ve useReducer() kullanımı (karmaşıklığa bağlı seçim)
+  - Form state için form kütüphaneleri (React Hook Form, Formik)
+
+- **Global State**:
+  - Context API + useReducer kombinasyonu
+  - Büyük uygulamalar için Redux Toolkit
+  - Immutable state updates (immer entegrasyonu)
+  - Selector paterninin uygulanması (state slice erişimi için)
+
+- **Asenkron State**:
+  - React Query veya SWR kullanımı
+  - Cache invalidation stratejileri
+  - Optimistic updates
+  - Error retrying ve retry politikaları
+
+### 3.4 Güvenlik
+
+- **Frontend Güvenlik Önlemleri**:
+  - Content Security Policy (CSP) tanımları
+  - XSS koruması için HTML Sanitizer kullanımı
+  - API isteklerinde CSRF token
+  - HTTPS Only cookie kullanımı
+  - JWT ve Refresh Token güvenli saklama
+
+### 3.5 Test Stratejisi
+
+- **Test Piramidi**:
+  - Birim testler: React Testing Library + Jest
+  - Entegrasyon testleri: Component kombinasyonları
+  - E2E testleri: Cypress veya Playwright
+
+- **Test Kapsamı Hedefleri**:
+  - Kritik iş mantığı için yüksek birim test kapsamı (>80%)
+  - Kullanıcı akışları için entegrasyon testleri
+  - Temel işlemler için E2E testleri
+
+## 4. Multi-Tenant Mimari
+
+- **Veritabanı Stratejisi**:
+  - Shared schema approach (her tabloda FirmaID ve SubeID alanları)
+  - DbContext seviyesinde global query filtreleme
+  - Performans için FirmaID ve SubeID üzerinde uygun indeksleme
+
+- **Güvenlik İzolasyonu**:
+  - Tenant bazlı veri erişim kontrolü
+  - JWT token içinde tenant bilgisi
+  - API katmanında tenant doğrulama middleware'i
+
+- **Multi-Tenant Servis Katmanı**:
+  - Her servis çağrısında tenant context'i aktarımı
+  - Cross-tenant veri erişimi için explicit yönetim
+  - Tenant-specific konfigürasyon yapılandırması
+
+## 5. DevOps ve CI/CD
+
+- **CI/CD Pipeline**:
+  - Build -> Test -> Static Analysis -> Deploy workflow
+  - Commit triggerlı otomatik derlemeler
+  - Dallandırma stratejisi (GitFlow veya GitHub Flow)
+  - Test coverage raporlama
+
+- **Environment Yönetimi**:
+  - Development, Test, Staging, Production ortamları
+  - Ortam bazlı konfigürasyon (appsettings.{Environment}.json)
+  - Secrets yönetimi (Azure Key Vault, GitHub Secrets)
+
+- **Containerization**:
+  - Docker ve Docker Compose yapılandırması
+  - Multi-stage build ile imaj optimizasyonu
+  - Health check ve readiness probe'lar
+
+- **Monitoring ve Logging**:
+  - Structured logging (Serilog)
+  - Centralized log storage (Elastic Stack, Application Insights)
+  - Metrik toplama (Prometheus veya Grafana)
+  - Alerting mekanizması
+
+## 6. Kod Kalitesi ve Kodlama Standartları
+
+### 6.1 Kod Stili ve Formatı
+
+- **Backend (.NET)**: 
+  - StyleCop ve .editorconfig ile kod stili kontrolü
+  - C# kodlama standartları ve Microsoft tavsiyelerine uyum
+  - Türkçe yorum satırları ve belgelendirme
+
+- **Frontend (React)**:
+  - ESLint ve Prettier yapılandırması
+  - Airbnb style guide veya standardize edilmiş kurallara uyum
+  - TypeScript strict mode ile tip güvenliği
+
+### 6.2 İsimlendirme Kuralları
+
+- **C# İsimlendirme**:
+  - Sınıflar, Interface'ler, metotlar: PascalCase
+  - Parametreler, yerel değişkenler: camelCase
+  - Private field'lar: _camelCase
+  - Constant'lar: UPPER_SNAKE_CASE
+  - Interface'ler I öneki ile başlamalı (IUserService)
+  - Boolean değişkenler/metotlar is/has/can öneki ile başlamalı
+
+- **JavaScript/TypeScript İsimlendirme**:
+  - Komponentler: PascalCase
+  - Fonksiyonlar, değişkenler: camelCase
+  - Sabitler: UPPER_SNAKE_CASE
+  - Enum'lar: PascalCase
+  - Event handler'lar handle öneki ile: handleClick, handleSubmit
+  - Custom hook'lar use öneki ile: useAuth, useFormValidation
+
+### 6.3 Dokümantasyon ve Yorumlar
+
+- **Kod Belgelendirme**:
+  - Her public API, class ve metot için XML belgelendirmesi
+  - Karmaşık algoritmalar için açıklayıcı yorumlar
+  - Türkçe açıklamalar ve dökümantasyon
+
+- **Know-How Aktarımı**:
+  - Mimari kararların belgelenmesi (ADR - Architecture Decision Records)
+  - Teknik borçların ve workaround'ların açıklanması
+  - README.md ve Wiki güncelliği
+
+## 7. Geliştirme Süreci
+
+### 7.1 Sürüm Yönetimi ve Geliştirme Döngüsü
+
+- **Dallandırma Stratejisi**:
+  - `main`: her zaman production-ready
+  - `develop`: aktif geliştirme dalı
+  - `feature/*`: yeni özellikler için
+  - `bugfix/*`: hata düzeltmeleri için
+  - `release/*`: release hazırlığı için
+
+- **Pull Request Süreci**:
+  - Code review zorunluluğu
+  - Automated check'ler (build, test, lint)
+  - Squash ve merge stratejisi
+
+- **Semantic Versioning**:
+  - MAJOR.MINOR.PATCH formatı
+  - Breaking change'ler için major version artışı
+  - Feature ekleme için minor version artışı
+  - Bug fix için patch artışı
+
+### 7.2 Geliştirme Sırası
+
+1. Backend API ve Veritabanı
+   - Domain modelleri ve business rules
+   - Repository ve servis katmanları
+   - API endpoint'leri
+   - Middleware ve cross-cutting concerns
+
+2. Frontend (React) Arayüzü
+   - Komponent yapısı ve stil kütüphanesi
+   - Routing ve navigasyon
+   - Form ve validasyon işlemleri
+   - State management ve API entegrasyonu
+
+3. Mobil Uygulama (React Native)
+   - Mobil özel komponentler ve yapılar
+   - Offline çalışma stratejisi
+   - Push notification entegrasyonu
+
+4. Entegrasyon Testleri ve Son Kontroller
+   - API ve Frontend entegrasyon testleri
+   - Performans optimizasyonları
+   - Güvenlik taraması ve düzeltmeleri
+
+## 8. Teknik Borç Yönetimi
+
+- Her sprint sonunda refactor zamanı ayrılacak
+- Kritik olmayan teknik borç backlog'da ticket olarak takip edilecek
+- Yeni özellik eklenmeden önce ilgili alandaki teknik borçlar temizlenecek
+- Periyodik kod sağlığı değerlendirmesi yapılacak
+
+Bu standartlar, projenin tüm yaşam döngüsü boyunca güncel tutulacak ve gerektiğinde genişletilecektir.
+
+## 9. Kod Tutarlılığı ve Hata Önleme Mekanizmaları
+
+### 9.1 Entity ve DTO Tutarlılığı
+
+- **Planlama ve Tasarım**:
+  - Proje başlangıcında Entity ve DTO sınıfları için tutarlı bir yapı planlanmalı
+  - Tüm Entity ve DTO'lar için property isimlendirme standartları belirlenmeli
+  - Entity'ler ve DTO'lar arasında özellik eşleştirme (mapping) kuralları tanımlanmalı
+
+- **Veri Tipleri Standardizasyonu**:
+  - Tüm Entity'lerde ID alanları için tek bir tip tercih edilmeli (`int` veya `Guid`)
+  - Tarih/saat için `DateTime` yerine `DateTimeOffset` tercih edilebilir (zaman dilimi koruması için)
+  - Boolean property'ler için `is`, `has`, `can` gibi anlamlı önekler kullanılmalı
+
+- **Entity-DTO İlişkileri**:
+  - Her Entity için ilgili DTO sınıfları (Response, Request, vb.) aynı namespace/dizin altında gruplandırılmalı
+  - Entity-DTO dönüşümleri için AutoMapper Profile'ları veya extension metotları oluşturulmalı
+  - Property isimleri farklı olacaksa açık mapping tanımlanmalı
+  ```csharp
+  // AutoMapper örneği
+  CreateMap<Kullanici, UserDto>()
+      .ForMember(dest => dest.Password, opt => opt.MapFrom(src => src.Sifre))
+      .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.KullaniciAdi));
+  ```
+
+- **Salt Okunur ve Yazılabilir Özellikler**:
+  - Salt okunur property'ler (`{ get; }`) sadece gerçekten değişmemesi gereken alanlarda kullanılmalı
+  - Entity sınıflarında değişmesi gereken alanlar için `{ get; set; }` kullanılmalı
+  - Salt okunur property'ler için constructor üzerinden değer atama mekanizması sağlanmalı
+
+### 9.2 Arayüz (Interface) Yönetimi
+
+- **Arayüz Tasarımı**:
+  - Her arayüz tek bir amaç için tasarlanmalı (Interface Segregation Principle)
+  - Aynı arayüzün farklı namespace'lerde tekrarlanmasından kaçınılmalı
+  - Ortak özellikler için base interface'ler tanımlanmalı
+
+- **Repository Arayüzleri**:
+  - Generic Repository pattern kullanılacaksa metot isimleri standart olmalı
+  - Repository arayüzlerinde yanlış çağrılması muhtemel metotlar için açıklayıcı XML belgelendirmesi yapılmalı
+  - Repository metotları için asenkron versiyonları açıkça tanımlanmalı
+
+- **Metot İsimlendirme Standardı**:
+  - Arayüzlerde ve implementasyonlarda tutarlı metot isimlendirmesi yapılmalı (örn: Find/FindAsync veya Get/GetAsync)
+  - Method overloading yerine, açıklayıcı isimler tercih edilmeli
+  - Find, Get, Fetch, Query gibi benzer anlama gelen kelimeler karışık kullanılmamalı
+
+### 9.3 Derleme Öncesi Kontrol Mekanizmaları
+
+- **Pre-Commit Kontrolleri**:
+  - Git pre-commit hook'ları ile otomatik kod formatlaması ve lint kontrolleri
+  - Kritik dosya değişikliklerinde otomatik uyarı/hatırlatma mekanizması
+  - Derlenmeyecek kod değişikliklerinin commit edilmesini engelleyecek kontroller
+
+- **PR Öncesi Derleme**:
+  - Pull Request oluşturmadan önce yerel derleme zorunluluğu
+  - Test kapsamı kontrolü (%70 ve üzeri hedeflenmeli)
+  - CodeQL veya SonarQube gibi statik kod analiz araçları entegrasyonu
+
+- **CI/CD Sürecinde Kalite Kontrolleri**:
+  - Unit testlerin hepsinin başarıyla çalıştığından emin olunmalı
+  - Integration testlerin kritik akışları kapsadığından emin olunmalı
+  - Derleme hatalarının otomatik olarak geliştiriciye bildirilmesi
+
+### 9.4 Tip Dönüşümü (Type Conversion) Kuralları
+
+- **Güvenli Tip Dönüşümü**:
+  - Farklı tipler arası dönüşümlerde her zaman açık (explicit) dönüşüm kullanılmalı
+  ```csharp
+  // Hatalı
+  int userId = userGuid; // Guid -> int
+
+  // Doğru
+  int userId = int.Parse(userGuid.ToString());
+  // veya 
+  int userId = Convert.ToInt32(userGuid);
+  ```
+
+- **Null Kontrolü**:
+  - Nullable tiplerle çalışırken her zaman null kontrolü yapılmalı
+  ```csharp
+  int? nullableId = entity.Id;
+  int id = nullableId ?? 0; // Eğer nullableId null ise 0 kullan
+  ```
+
+- **Farklı ID Tipleri Arası Karşılaştırma**:
+  - Farklı tipteki ID'ler karşılaştırılırken string dönüşümü kullanılmalı
+  ```csharp
+  // Hatalı
+  if (guidId == intId) // Guid == int hata verir
+
+  // Doğru
+  if (guidId.ToString() == intId.ToString())
+  ```
+
+### 9.5 Derleme Hataları İçin Süreç
+
+- **Kodlama Kontrol Listesi**:
+  - Her yeni entity eklendiğinde ID tipinin standartlara uygunluğu kontrol edilmeli
+  - Her yeni DTO eklendiğinde ilgili entity ile uyumluluğu kontrol edilmeli
+  - Her değişiklik sonrası tam derleme (Rebuild All) yapılmalı
+
+- **Hata Yönetim Süreci**:
+  - Derleme hatalarının kaydedildiği bir log dosyası tutulmalı
+  - Tekrarlayan hatalar için çözüm şablonları oluşturulmalı
+  - Proje genelinde benzer hataların olup olmadığını kontrol eden otomasyon araçları kullanılmalı
+
+- **Code Review Odak Noktaları**:
+  - Entity-DTO eşleşmesi kontrol edilmeli
+  - Repository metotlarının doğru çağrıldığından emin olunmalı
+  - Tip dönüşümlerinin güvenli yapıldığından emin olunmalı
+
+
+

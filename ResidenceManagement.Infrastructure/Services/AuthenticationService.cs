@@ -1,0 +1,439 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using ResidenceManagement.Core.Common;
+using ResidenceManagement.Core.DTOs.Authentication;
+using ResidenceManagement.Core.Entities.Identity;
+using ResidenceManagement.Core.Interfaces.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using ResidenceManagement.Core.Interfaces;
+using System.Linq;
+
+namespace ResidenceManagement.Infrastructure.Services
+{
+    /// <summary>
+    /// Kimlik doğrulama servisi implementasyonu
+    /// </summary>
+    public class AuthenticationService : IAuthenticationService
+    {
+        private readonly IRepository<Kullanici> _userRepository;
+        private readonly IRepository<RefreshToken> _refreshTokenRepository;
+        private readonly IRepository<UserRole> _userRoleRepository;
+        private readonly IRepository<Rol> _roleRepository;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthenticationService> _logger;
+
+        /// <summary>
+        /// AuthenticationService constructor
+        /// </summary>
+        public AuthenticationService(
+            IRepository<Kullanici> userRepository,
+            IRepository<RefreshToken> refreshTokenRepository,
+            IRepository<UserRole> userRoleRepository,
+            IRepository<Rol> roleRepository,
+            IConfiguration configuration,
+            ILogger<AuthenticationService> logger)
+        {
+            _userRepository = userRepository;
+            _refreshTokenRepository = refreshTokenRepository;
+            _userRoleRepository = userRoleRepository;
+            _roleRepository = roleRepository;
+            _configuration = configuration;
+            _logger = logger;
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponse<TokenResponse>> LoginAsync(LoginRequest request)
+        {
+            try
+            {
+                // Kullanıcı adı veya e-posta ile kullanıcıyı bul
+                var user = await _userRepository.GetFirstOrDefaultAsync(u => 
+                    u.KullaniciAdi == request.UserName || u.Email == request.UserName);
+
+                // Kullanıcı bulunamadıysa veya aktif değilse
+                if (user == null || !user.IsActive)
+                {
+                    return new ApiResponse<TokenResponse>
+                    {
+                        Success = false,
+                        Message = "Kullanıcı adı, e-posta veya şifre hatalı.",
+                        StatusCode = 401
+                    };
+                }
+
+                // Şifre doğrulama
+                if (!VerifyPasswordHash(request.Password, user.Sifre, user.SifreSalt))
+                {
+                    return new ApiResponse<TokenResponse>
+                    {
+                        Success = false,
+                        Message = "Kullanıcı adı, e-posta veya şifre hatalı.",
+                        StatusCode = 401
+                    };
+                }
+
+                // Kullanıcının rollerini al
+                var userRoles = await _userRoleRepository.GetAllAsync(ur => ur.KullaniciId == user.Id);
+                var roleIds = userRoles.Select(ur => ur.RolId).ToList();
+
+                // roles listesini birleştirmek için yeni bir liste oluştur
+                var roles = new List<Rol>();
+
+                // Her bir roleId için rol bul
+                foreach (var roleId in roleIds)
+                {
+                    var role = await _roleRepository.GetFirstOrDefaultAsync(r => r.Id.ToString() == roleId.ToString());
+                    if (role != null)
+                    {
+                        roles.Add(role);
+                    }
+                }
+
+                // Token ve refresh token oluştur
+                var jwtToken = GenerateJwtToken(user, roles.Select(r => r.RolAdi).ToList());
+                var refreshToken = GenerateRefreshToken();
+
+                // Refresh token veritabanına kaydet
+                var refreshTokenEntity = new RefreshToken
+                {
+                    Token = refreshToken,
+                    ExpirationDate = DateTime.UtcNow.AddDays(7),
+                    CreatedByIp = "127.0.0.1", // IP bilgisi request'ten alınabilir
+                    KullaniciId = user.Id,
+                    FirmaId = user.FirmaId,
+                    SubeId = user.SubeId
+                };
+
+                await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+                await _refreshTokenRepository.SaveChangesAsync();
+
+                return new ApiResponse<TokenResponse>
+                {
+                    Success = true,
+                    Message = "Giriş başarılı.",
+                    Data = new TokenResponse
+                    {
+                        Token = jwtToken,
+                        RefreshToken = refreshToken,
+                        ExpiresIn = 3600 // Token geçerlilik süresi (saniye)
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Login sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                return new ApiResponse<TokenResponse>
+                {
+                    Success = false,
+                    Message = "Giriş işlemi sırasında bir hata oluştu.",
+                    StatusCode = 500
+                };
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponse<TokenResponse>> RefreshTokenAsync(RefreshTokenRequest request)
+        {
+            try
+            {
+                // Refresh token veritabanında ara
+                var refreshToken = await _refreshTokenRepository.GetFirstOrDefaultAsync(rt => 
+                    rt.Token == request.RefreshToken);
+
+                // Refresh token bulunamadıysa
+                if (refreshToken == null)
+                {
+                    return new ApiResponse<TokenResponse>
+                    {
+                        Success = false,
+                        Message = "Geçersiz refresh token.",
+                        StatusCode = 401
+                    };
+                }
+
+                // Refresh token geçersiz kılınmışsa veya süresi dolmuşsa
+                if (refreshToken.RevokedDate != null || refreshToken.IsExpired)
+                {
+                    return new ApiResponse<TokenResponse>
+                    {
+                        Success = false,
+                        Message = "Refresh token süresi dolmuş veya geçersiz kılınmış.",
+                        StatusCode = 401
+                    };
+                }
+
+                // Kullanıcıyı bul
+                var user = await _userRepository.GetByIdAsync(refreshToken.KullaniciId);
+                if (user == null || !user.IsActive)
+                {
+                    return new ApiResponse<TokenResponse>
+                    {
+                        Success = false,
+                        Message = "Kullanıcı bulunamadı veya hesap aktif değil.",
+                        StatusCode = 401
+                    };
+                }
+
+                // Kullanıcının rollerini al
+                var userRoles = await _userRoleRepository.GetAllAsync(ur => ur.KullaniciId == user.Id);
+                var roleIds = userRoles.Select(ur => ur.RolId).ToList();
+
+                // roles listesini birleştirmek için yeni bir liste oluştur
+                var roles = new List<Rol>();
+
+                // Her bir roleId için rol bul
+                foreach (var roleId in roleIds)
+                {
+                    var role = await _roleRepository.GetFirstOrDefaultAsync(r => r.Id.ToString() == roleId.ToString());
+                    if (role != null)
+                    {
+                        roles.Add(role);
+                    }
+                }
+
+                // Yeni token ve refresh token oluştur
+                var jwtToken = GenerateJwtToken(user, roles.Select(r => r.RolAdi).ToList());
+                var newRefreshToken = GenerateRefreshToken();
+
+                // Eski refresh token'ı geçersiz kıl
+                refreshToken.RevokedDate = DateTime.UtcNow;
+                refreshToken.ReplacedByToken = newRefreshToken;
+                refreshToken.ReasonRevoked = "Yenilendi";
+                refreshToken.IsActive = false;
+
+                await _refreshTokenRepository.UpdateAsync(refreshToken);
+
+                // Yeni refresh token'ı kaydet
+                var newRefreshTokenEntity = new RefreshToken
+                {
+                    Token = newRefreshToken,
+                    ExpirationDate = DateTime.UtcNow.AddDays(7),
+                    CreatedByIp = "127.0.0.1", // IP bilgisi request'ten alınabilir
+                    KullaniciId = user.Id,
+                    FirmaId = user.FirmaId,
+                    SubeId = user.SubeId
+                };
+
+                await _refreshTokenRepository.AddAsync(newRefreshTokenEntity);
+                await _refreshTokenRepository.SaveChangesAsync();
+
+                return new ApiResponse<TokenResponse>
+                {
+                    Success = true,
+                    Message = "Token yenilendi.",
+                    Data = new TokenResponse
+                    {
+                        Token = jwtToken,
+                        RefreshToken = newRefreshToken,
+                        ExpiresIn = 3600 // Token geçerlilik süresi (saniye)
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Token yenileme sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                return new ApiResponse<TokenResponse>
+                {
+                    Success = false,
+                    Message = "Token yenileme sırasında bir hata oluştu.",
+                    StatusCode = 500
+                };
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponse<bool>> RevokeTokenAsync(string token)
+        {
+            try
+            {
+                // Refresh token veritabanında ara
+                var refreshToken = await _refreshTokenRepository.GetFirstOrDefaultAsync(rt => 
+                    rt.Token == token);
+
+                // Refresh token bulunamadıysa
+                if (refreshToken == null)
+                {
+                    return new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "Geçersiz refresh token.",
+                        StatusCode = 404
+                    };
+                }
+
+                // Refresh token zaten geçersiz kılınmışsa
+                if (refreshToken.RevokedDate != null)
+                {
+                    return new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "Refresh token zaten geçersiz kılınmış.",
+                        StatusCode = 400
+                    };
+                }
+
+                // Refresh token'ı geçersiz kıl
+                refreshToken.RevokedDate = DateTime.UtcNow;
+                refreshToken.RevokedByIp = "127.0.0.1"; // IP bilgisi request'ten alınabilir
+                refreshToken.ReasonRevoked = "Kullanıcı çıkış yaptı";
+                refreshToken.IsActive = false;
+
+                await _refreshTokenRepository.UpdateAsync(refreshToken);
+                await _refreshTokenRepository.SaveChangesAsync();
+
+                return new ApiResponse<bool>
+                {
+                    Success = true,
+                    Message = "Token başarıyla geçersiz kılındı.",
+                    Data = true
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Token geçersiz kılma sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Token geçersiz kılma sırasında bir hata oluştu.",
+                    StatusCode = 500
+                };
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponse<UserInfoResponse>> GetUserInfoAsync(int userId)
+        {
+            try
+            {
+                // Kullanıcıyı bul
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    return new ApiResponse<UserInfoResponse>
+                    {
+                        Success = false,
+                        Message = "Kullanıcı bulunamadı.",
+                        StatusCode = 404
+                    };
+                }
+
+                // Kullanıcının rollerini al
+                var userRoles = await _userRoleRepository.GetAllAsync(ur => ur.KullaniciId == user.Id);
+                var roleIds = userRoles.Select(ur => ur.RolId).ToList();
+
+                // roles listesini birleştirmek için yeni bir liste oluştur
+                var roles = new List<Rol>();
+
+                // Her bir roleId için rol bul
+                foreach (var roleId in roleIds)
+                {
+                    var role = await _roleRepository.GetFirstOrDefaultAsync(r => r.Id.ToString() == roleId.ToString());
+                    if (role != null)
+                    {
+                        roles.Add(role);
+                    }
+                }
+
+                // Kullanıcı bilgilerini DTO'ya aktar
+                var userInfo = new UserInfoResponse
+                {
+                    UserId = user.Id,
+                    Username = user.KullaniciAdi,
+                    FirstName = user.Ad,
+                    LastName = user.Soyad,
+                    Email = user.Email,
+                    PhoneNumber = user.Telefon,
+                    Roles = roles.Select(r => r.RolAdi).ToList(),
+                    CompanyId = user.FirmaId,
+                    BranchId = user.SubeId
+                };
+
+                return new ApiResponse<UserInfoResponse>
+                {
+                    Success = true,
+                    Message = "Kullanıcı bilgileri başarıyla getirildi.",
+                    Data = userInfo
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Kullanıcı bilgileri getirme sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                return new ApiResponse<UserInfoResponse>
+                {
+                    Success = false,
+                    Message = "Kullanıcı bilgileri getirme sırasında bir hata oluştu.",
+                    StatusCode = 500
+                };
+            }
+        }
+
+        private string GenerateJwtToken(Kullanici user, List<string> roles)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.KullaniciAdi),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("FirmaId", user.FirmaId.ToString()),
+                new Claim("SubeId", user.SubeId.ToString())
+            };
+
+            // Rolleri ekle
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = DateTime.Now.AddHours(1);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: expires,
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        private bool VerifyPasswordHash(string password, string storedHash, string storedSalt)
+        {
+            if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(storedHash) || string.IsNullOrWhiteSpace(storedSalt)) 
+                return false;
+            
+            try
+            {
+                var saltBytes = Convert.FromBase64String(storedSalt);
+                var hashBytes = Convert.FromBase64String(storedHash);
+                
+                using (var hmac = new HMACSHA512(saltBytes))
+                {
+                    var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+                    return Convert.ToBase64String(computedHash) == storedHash;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+} 

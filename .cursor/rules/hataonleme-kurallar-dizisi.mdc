@@ -1,0 +1,58 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Residence-Manager Proje Geliştirme Kuralları
+
+Bu doküman, Residence-Manager projesinde karşılaşılan hataların tekrarlanmaması için uyulması gereken kuralları içerir.
+
+## Tip Dönüşüm Kuralları
+
+1. String değerlerini int?, double veya decimal gibi tiplere dönüştürürken açık (explicit) dönüşüm kullanın
+2. Nullable tiplerden normal tiplere dönüşüm yaparken her zaman null kontrolü yapın
+3. ReadOnlySpan<byte> gerektiren metotlara int? değerleri geçirirken ToString() dönüşümü yapın
+4. Tip uyumsuzluğu olan metot çağrılarında parametre dönüşümlerini açık olarak yapın
+
+## DTO ve Entity Sınıf Kuralları
+
+1. DTO sınıflarında kullanılacak tüm özellikleri eksiksiz tanımlayın
+2. Aynı DTO sınıfını birden fazla yerde tanımlamaktan kaçının
+3. Entity sınıflarında controller veya servislerde kullanılan tüm gerekli özelliklerin olduğundan emin olun
+4. TotalCost, CompletionRate gibi sık kullanılan özellikleri ilgili tüm sınıflara ekleyin
+
+## Interface ve Implementasyon Kuralları
+
+1. Interface'leri tam olarak implement edin, eksik metot bırakmayın
+2. Interface'e yeni metot eklediğinizde bu interface'i kullanan tüm sınıfları güncelleyin
+3. İmzaların (dönüş tipi, parametre tipleri) tam eşleştiğinden emin olun
+4. Controller'ların kullandığı metotların interface'de tanımlı olduğundan emin olun
+
+## Namespace Yönetim Kuralları
+
+1. Duplike interface tanımlarından kaçının (farklı namespace'lerde aynı interface)
+2. Doğru using yönergelerini ekleyin, özellikle extension metodları kullanırken
+3. Namespace hiyerarşisini tutarlı tutun
+4. ApiResponse gibi ortak sınıfların namespace'lerini tüm projelerde import edin
+
+## Kod Tamamlama Kuralları
+
+1. Try bloklarını catch veya finally ile tamamlayın
+2. Açılan her süslü parantezi kapatın
+3. Tüm metot gövdelerini eksiksiz tanımlayın
+4. Interface metotlarını implement ederken içlerini doldurun
+
+## Dependency Injection Kuralları
+
+1. Program.cs'de servis kayıtlarında doğru interface-implementation eşleşmesini sağlayın
+2. Extension metodlarını tanımlarken doğru namespace'leri ekleyin
+3. RegisterInfrastructureServices gibi extension metodlarını doğru tanımlayın
+4. Servisleri kaydetmeden önce ilgili tüm bağımlılıkların tanımlı olduğundan emin olun
+
+## Derleme Sırası Kuralları
+
+1. Değişikliklerden sonra projeleri doğru sırayla derleyin (Core→Infrastructure→API)
+2. Interface değişikliklerinden sonra implementasyon sınıflarını güncelleyip derleyin
+3. Major değişikliklerden sonra tüm solution'ı yeniden derleyin
+
+4. Derleme hatalarını sırayla ve sistematik olarak çözün

@@ -13,6 +13,9 @@ namespace ResidenceManagement.Core.Interfaces
         // Tüm varlıkları getir
         Task<IReadOnlyList<T>> GetAllAsync();
         
+        // Filtrelenmiş tüm varlıkları getir (predicate parametresi ile)
+        Task<IReadOnlyList<T>> GetAllAsync(Expression<Func<T, bool>> predicate);
+        
         // Filtrelenmiş tüm varlıkları getir
         Task<IReadOnlyList<T>> GetAsync(Expression<Func<T, bool>> predicate);
         
@@ -35,6 +38,9 @@ namespace ResidenceManagement.Core.Interfaces
         
         // Tek bir varlık getir
         Task<T> GetFirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
+        
+        // FindAsync - Filtrelenmiş varlıkları getir (UserService ve TokenService'de kullanılıyor)
+        Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> predicate);
         
         // Varlık ekle
         Task<T> AddAsync(T entity);
@@ -59,5 +65,8 @@ namespace ResidenceManagement.Core.Interfaces
         
         // Verilen koşula göre varlık var mı kontrol et
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate = null);
+        
+        // Değişiklikleri kaydet
+        Task<int> SaveChangesAsync();
     }
 } 

@@ -41,6 +41,12 @@ namespace ResidenceManagement.Infrastructure.Data.Repositories
             return await _dbContext.SaveChangesAsync();
         }
 
+        public async Task<int> SaveChangesAsync()
+        {
+            // Complete metodu ile aynı işi yapar, sadece farklı isimle
+            return await _dbContext.SaveChangesAsync();
+        }
+
         public async Task<int> CompleteWithTransaction()
         {
             if (_transaction == null)

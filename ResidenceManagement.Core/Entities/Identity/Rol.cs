@@ -28,6 +28,15 @@ namespace ResidenceManagement.Core.Entities.Identity
         /// Rol adı
         /// </summary>
         public string Ad { get; set; }
+        
+        /// <summary>
+        /// Rol adı (RolAdi aynı değere sahip, uyumluluk için)
+        /// </summary>
+        public string RolAdi 
+        { 
+            get => Ad; 
+            set => Ad = value; 
+        }
 
         /// <summary>
         /// Rol açıklaması

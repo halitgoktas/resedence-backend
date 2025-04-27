@@ -21,8 +21,9 @@ namespace ResidenceManagement.Core.Interfaces
         // Diğer entity'ler için repository'ler
         // ...
         
-        // Transaction yönetimi
+        // Transaction yönetimi - Repositories.IUnitOfWork ile tutarlı olması için
         Task<int> SaveChangesAsync();
+        Task<int> Complete(); // Repositories.IUnitOfWork ile uyumluluk için
         Task BeginTransactionAsync();
         Task CommitAsync();
         Task RollbackAsync();

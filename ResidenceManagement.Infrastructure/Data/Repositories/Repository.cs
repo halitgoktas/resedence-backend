@@ -25,6 +25,11 @@ namespace ResidenceManagement.Infrastructure.Data.Repositories
             return await _dbContext.Set<T>().ToListAsync();
         }
 
+        public async Task<IReadOnlyList<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbContext.Set<T>().Where(predicate).ToListAsync();
+        }
+
         public async Task<IReadOnlyList<T>> GetAsync(Expression<Func<T, bool>> predicate)
         {
             return await _dbContext.Set<T>().Where(predicate).ToListAsync();
@@ -86,6 +91,12 @@ namespace ResidenceManagement.Infrastructure.Data.Repositories
             return await _dbContext.Set<T>().FirstOrDefaultAsync(predicate);
         }
 
+        // FindAsync metodu implementasyonu - UserService ve TokenService'de kullanılıyor
+        public async Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbContext.Set<T>().Where(predicate).ToListAsync();
+        }
+
         public async Task<T> AddAsync(T entity)
         {
             await _dbContext.Set<T>().AddAsync(entity);
@@ -134,6 +145,11 @@ namespace ResidenceManagement.Infrastructure.Data.Repositories
                 return await _dbContext.Set<T>().AnyAsync();
             
             return await _dbContext.Set<T>().AnyAsync(predicate);
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _dbContext.SaveChangesAsync();
         }
     }
 } 

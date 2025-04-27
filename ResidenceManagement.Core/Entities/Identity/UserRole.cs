@@ -5,37 +5,59 @@ using ResidenceManagement.Core.Common;
 
 namespace ResidenceManagement.Core.Entities.Identity
 {
-    // UserRole sınıfı, kullanıcılar ve roller arasındaki ilişkiyi tanımlar
+    /// <summary>
+    /// Kullanıcı-Rol ilişkisini tanımlayan sınıf
+    /// </summary>
     public class UserRole : BaseEntity, ITenant
     {
-        // Kullanıcı ID'si
-        public Guid KullaniciId { get; set; }
+        /// <summary>
+        /// Kullanıcı ID
+        /// </summary>
+        public int KullaniciId { get; set; }
         
-        // Rol ID'si
-        public Guid RolId { get; set; }
+        /// <summary>
+        /// Rol ID
+        /// </summary>
+        public int RolId { get; set; }
         
-        // Kullanıcıya rolün atanma tarihi
+        /// <summary>
+        /// Kullanıcıya rolün atanma tarihi
+        /// </summary>
         public DateTime AtamaTarihi { get; set; }
         
-        // Kullanıcının bağlı olduğu firma ID'si (multi-tenant yapı için)
-        public Guid FirmaId { get; set; }
+        /// <summary>
+        /// Kullanıcının bağlı olduğu firma ID
+        /// </summary>
+        public int FirmaId { get; set; }
         
-        // Kullanıcının bağlı olduğu şube ID'si (multi-tenant yapı için)
-        public Guid SubeId { get; set; }
+        /// <summary>
+        /// Kullanıcının bağlı olduğu şube ID
+        /// </summary>
+        public int SubeId { get; set; }
         
-        // Rolün geçerlilik bitiş tarihi (opsiyonel)
+        /// <summary>
+        /// Rolün geçerlilik bitiş tarihi (opsiyonel)
+        /// </summary>
         public DateTime? BitisTarihi { get; set; }
         
-        // Rolün durumu (aktif/pasif)
+        /// <summary>
+        /// Rolün durumu (aktif/pasif)
+        /// </summary>
         public bool AktifMi { get; set; }
         
-        // Navigation Properties
-        // İlişkili kullanıcı
+        /// <summary>
+        /// İlişkili kullanıcı
+        /// </summary>
         public virtual Kullanici Kullanici { get; set; }
         
-        // İlişkili rol
+        /// <summary>
+        /// İlişkili rol
+        /// </summary>
         public virtual Rol Rol { get; set; }
         
+        /// <summary>
+        /// Yapıcı metot
+        /// </summary>
         public UserRole()
         {
             AtamaTarihi = DateTime.Now;
