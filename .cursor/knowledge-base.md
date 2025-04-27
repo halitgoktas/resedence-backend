@@ -62,3 +62,6 @@
 - Eksik kalan loglama işlemleri tamamlanacak
 - Response standardizasyonu geliştirilecek
 - Entity Framework Core yapılandırması optimize edilecek 
+
+## [ApiResponse.Success yöntem gibi kullanılamaz]Çözüm: 
+ApiControllerBase sınıfında `ApiResponse.Success()` ve `ApiResponse.Failure()` metot çağrıları hatalıydı. Doğru metot isimleri `ApiResponse.CreateSuccess()` ve `ApiResponse.CreateFail()` olarak düzeltildi. ApiResponse sınıfında "Success" bir property olduğu için bu şekilde kullanılamaz. Her zaman ApiResponse sınıfındaki factory metotlarının (CreateSuccess, CreateFail) doğru isimlerle çağrılmasına dikkat edilmeli. 

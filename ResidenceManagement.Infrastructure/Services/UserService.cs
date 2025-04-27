@@ -598,6 +598,116 @@ namespace ResidenceManagement.Infrastructure.Services
             }
         }
 
+        /// <inheritdoc/>
+        public async Task<ApiResponse<bool>> ForgotPasswordAsync(string email)
+        {
+            try
+            {
+                var kullanici = await _kullaniciRepository.GetFirstOrDefaultAsync(u => u.Email == email);
+
+                if (kullanici == null)
+                {
+                    return new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "Bu email adresi ile kayıtlı kullanıcı bulunamadı",
+                        Data = false,
+                        StatusCode = 404
+                    };
+                }
+
+                // Şifre sıfırlama token'ı oluştur
+                string resetToken = GenerateResetToken();
+                
+                // Token'ın son kullanma tarihini ayarla (örn: 24 saat)
+                DateTime tokenExpiry = DateTime.UtcNow.AddHours(24);
+                
+                // Token'ı kullanıcı ile ilişkilendir
+                kullanici.ResetPasswordToken = resetToken;
+                kullanici.ResetPasswordTokenExpiry = tokenExpiry;
+                kullanici.UpdatedDate = DateTime.UtcNow;
+                
+                await _kullaniciRepository.UpdateAsync(kullanici);
+                await _unitOfWork.SaveChangesAsync();
+                
+                // Burada email gönderme işlemi yapılabilir
+                // Email servisi entegre edildiğinde bu kısım değiştirilecek
+                
+                return new ApiResponse<bool>
+                {
+                    Success = true,
+                    Message = "Şifre sıfırlama bağlantısı email adresinize gönderildi",
+                    Data = true,
+                    StatusCode = 200
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Şifre sıfırlama işlemi başlatılırken bir hata oluştu: {ex.Message}");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Şifre sıfırlama işlemi başlatılırken bir hata oluştu",
+                    Data = false,
+                    StatusCode = 500
+                };
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponse<bool>> ResetPasswordAsync(string token, string newPassword)
+        {
+            try
+            {
+                var kullanici = await _kullaniciRepository.GetFirstOrDefaultAsync(u => 
+                    u.ResetPasswordToken == token && 
+                    u.ResetPasswordTokenExpiry > DateTime.UtcNow);
+
+                if (kullanici == null)
+                {
+                    return new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "Geçersiz veya süresi dolmuş token",
+                        Data = false,
+                        StatusCode = 400
+                    };
+                }
+
+                // Yeni şifre için hash oluştur
+                string salt = kullanici.SifreSalt; // Mevcut salt'ı kullan
+                string hashedPassword = HashPassword(newPassword, salt);
+                
+                // Şifreyi güncelle ve token bilgilerini temizle
+                kullanici.Sifre = hashedPassword;
+                kullanici.ResetPasswordToken = null;
+                kullanici.ResetPasswordTokenExpiry = null;
+                kullanici.UpdatedDate = DateTime.UtcNow;
+                
+                await _kullaniciRepository.UpdateAsync(kullanici);
+                await _unitOfWork.SaveChangesAsync();
+                
+                return new ApiResponse<bool>
+                {
+                    Success = true,
+                    Message = "Şifreniz başarıyla sıfırlandı",
+                    Data = true,
+                    StatusCode = 200
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Şifre sıfırlama işlemi tamamlanırken bir hata oluştu: {ex.Message}");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Şifre sıfırlama işlemi tamamlanırken bir hata oluştu",
+                    Data = false,
+                    StatusCode = 500
+                };
+            }
+        }
+
         #region Helper Methods
 
         /// <summary>
@@ -665,6 +775,19 @@ namespace ResidenceManagement.Infrastructure.Services
                 var hashedBytes = sha256.ComputeHash(saltedPasswordBytes);
                 return Convert.ToBase64String(hashedBytes);
             }
+        }
+
+        /// <summary>
+        /// Şifre sıfırlama için token üretir
+        /// </summary>
+        private string GenerateResetToken()
+        {
+            byte[] tokenBytes = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(tokenBytes);
+            }
+            return Convert.ToBase64String(tokenBytes);
         }
 
         #endregion

@@ -70,6 +70,21 @@ namespace ResidenceManagement.Core.Interfaces.Services
         Task<ApiResponse<bool>> ChangePasswordAsync(int id, ChangePasswordDto changePasswordDto);
         
         /// <summary>
+        /// Şifremi unuttum işlemi başlatır
+        /// </summary>
+        /// <param name="email">Kullanıcı email adresi</param>
+        /// <returns>İşlem sonucu</returns>
+        Task<ApiResponse<bool>> ForgotPasswordAsync(string email);
+        
+        /// <summary>
+        /// Şifre sıfırlama işlemini tamamlar
+        /// </summary>
+        /// <param name="token">Sıfırlama token</param>
+        /// <param name="newPassword">Yeni şifre</param>
+        /// <returns>İşlem sonucu</returns>
+        Task<ApiResponse<bool>> ResetPasswordAsync(string token, string newPassword);
+        
+        /// <summary>
         /// Kullanıcının rollerini getirir
         /// </summary>
         /// <param name="id">Kullanıcı ID</param>

@@ -223,4 +223,37 @@
   - [ ] Health check endpoint'leri
   - [ ] Application insights entegrasyonu
   - [ ] Metrik toplama
-  - [ ] Alert ve notification mekanizması 
+  - [ ] Alert ve notification mekanizması
+
+## 8. Kimlik Bildirme Sistemi (KBS) Entegrasyonu
+
+- [x] **KBS Veri Modelleri**
+  - [x] KbsSettings entity'si
+  - [x] KbsNotification entity'si
+  - [x] KbsResidentNotificationDto
+  - [x] KbsResponseDto yanıt modeli
+  - [x] KbsNotificationBatchDto (toplu bildirim için)
+
+- [ ] **KBS Servis Katmanı**
+  - [x] IKbsIntegrationService arayüzü
+  - [x] KbsIntegrationService implementasyonu
+  - [x] IKbsSettingsService arayüzü
+  - [ ] KbsSettingsService implementasyonu
+
+- [ ] **KBS Web Servis Entegrasyonu**
+  - [ ] SOAP/XML web servis client
+  - [ ] KBS login işlemi
+  - [ ] KBS giriş bildirimi
+  - [ ] KBS çıkış bildirimi
+  - [ ] KBS bildirim durumu sorgulama
+
+- [ ] **KBS Controller ve Endpoint'ler**
+  - [ ] KbsSettingsController
+  - [ ] KbsResidentController
+  - [ ] KbsNotificationController
+
+- [ ] **KBS Bildirim Yönetimi**
+  - [ ] Tekil bildirim işlemleri
+  - [ ] Toplu bildirim işlemleri
+  - [ ] Bildirim sorgulama ve takip
+  - [ ] Bildirim geçmişi 

@@ -202,6 +202,9 @@ app.UseGlobalExceptionHandler();
 
 app.UseHttpsRedirection();
 
+// Request/Response Loglama Middleware'ini Ekle
+app.UseCustomRequestResponseLogging();
+
 // CORS Middleware'ini Ekle
 app.UseCors("CorsPolicy");
 

@@ -5,6 +5,7 @@ using ResidenceManagement.Infrastructure.Services;
 using ResidenceManagement.Infrastructure.Data.Context;
 using ResidenceManagement.Core.Interfaces.Repositories;
 using ResidenceManagement.Infrastructure.Data.Repositories;
+using ResidenceManagement.Infrastructure.Logging;
 
 namespace ResidenceManagement.Infrastructure
 {
@@ -27,6 +28,9 @@ namespace ResidenceManagement.Infrastructure
             
             // Tam nitelikli isim kullanarak
             services.AddScoped<ResidenceManagement.Core.Interfaces.Services.IMaintenanceScheduleService, MaintenanceScheduleService>();
+            
+            // Loglama servislerini ekle
+            services.AddLoggingServices(configuration);
             
             // Diğer servisler...
             

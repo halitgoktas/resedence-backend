@@ -49,10 +49,10 @@ namespace ResidenceManagement.Core.Entities.Identity
         public DateTime? SonGirisTarihi { get; set; }
         
         // Şifre sıfırlama token'ı
-        public string SifreSifirlamaToken { get; set; }
+        public string ResetPasswordToken { get; set; }
         
         // Token son geçerlilik tarihi
-        public DateTime? TokenSonGecerlilikTarihi { get; set; }
+        public DateTime? ResetPasswordTokenExpiry { get; set; }
         
         // E-posta doğrulama durumu
         public bool EmailDogrulandiMi { get; set; }

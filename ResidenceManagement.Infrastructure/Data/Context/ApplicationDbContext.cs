@@ -13,6 +13,7 @@ using ResidenceManagement.Core.Entities.Financial;
 using ResidenceManagement.Core.Entities.Identity;
 using ResidenceManagement.Core.Entities.Property;
 using ResidenceManagement.Core.Entities.Common;
+using ResidenceManagement.Core.Entities.Kbs;
 using ResidenceManagement.Core.Models.Financial;
 // Türkçe ve İngilizce sınıf çakışmasını önlemek için alias tanımlama
 using PropertyApartment = ResidenceManagement.Core.Entities.Property.Apartment;
@@ -64,6 +65,9 @@ namespace ResidenceManagement.Infrastructure.Data.Context
         public DbSet<MaintenanceDocument> MaintenanceDocuments { get; set; }
         public DbSet<MaintenanceChecklistItem> MaintenanceChecklists { get; set; }
         public DbSet<MaintenanceCost> MaintenanceCosts { get; set; }
+        
+        // KBS bildirimleri için DbSet
+        public DbSet<KbsNotification> KbsNotifications { get; set; }
 
         // Multi-tenant için FirmaId ve SubeId değerlerini ayarla
         public void SetFirmaAndSubeId(int firmaId, int subeId)
