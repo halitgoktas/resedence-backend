@@ -11,12 +11,17 @@ using ResidenceManagement.Core.Models.KBS;
 using ResidenceManagement.Core.Exceptions;
 using ResidenceManagement.Core.Entities.Common;
 using ResidenceManagement.Core.DTOs;
+using ResidenceManagement.Core.Common;
+using ResidenceManagement.Core.Entities.Identity;
+using ResidenceManagement.Core.Entities.Person;
+using ResidenceManagement.Core.Entities.Property;
+using ResidenceManagement.Core.Interfaces.Services;
 
 namespace ResidenceManagement.Core.Services
 {
-    // KBS (Kimlik Bildirme Sistemi) entegrasyonu için servis sınıfı
-    // Bu sınıf KBS ile iletişim kurarak konaklama bildirimlerini göndermek, iptal etmek ve
-    // durumlarını sorgulamak için kullanılır
+    /// <summary>
+    /// KBS (Kimlik Bildirme Sistemi) entegrasyonu için servis sınıfı
+    /// </summary>
     public class KbsIntegrationService : IKbsIntegrationService, IMultiTenant
     {
         private readonly HttpClient _httpClient;
@@ -30,7 +35,9 @@ namespace ResidenceManagement.Core.Services
         public int FirmaId { get; set; }
         public int SubeId { get; set; }
 
-        // KBS entegrasyon servisi constructor
+        /// <summary>
+        /// KBS entegrasyon servisi constructor
+        /// </summary>
         public KbsIntegrationService(
             HttpClient httpClient,
             IConfiguration configuration,
@@ -49,13 +56,143 @@ namespace ResidenceManagement.Core.Services
             ConfigureHttpClient();
         }
 
-        // HTTP istemci yapılandırması
+        /// <summary>
+        /// HTTP istemci yapılandırması
+        /// </summary>
         private void ConfigureHttpClient()
         {
+            if (string.IsNullOrEmpty(_baseUrl))
+            {
+                _logger.LogWarning("KBS API URL tanımlı değil.");
+                return;
+            }
+
             _httpClient.BaseAddress = new Uri(_baseUrl);
-            _httpClient.DefaultRequestHeaders.Add("X-Api-Key", _apiKey);
-            _httpClient.DefaultRequestHeaders.Add("X-Api-Secret", _apiSecret);
+            
+            if (!string.IsNullOrEmpty(_apiKey))
+                _httpClient.DefaultRequestHeaders.Add("X-Api-Key", _apiKey);
+                
+            if (!string.IsNullOrEmpty(_apiSecret))
+                _httpClient.DefaultRequestHeaders.Add("X-Api-Secret", _apiSecret);
+                
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        }
+
+        /// <summary>
+        /// KBS sistemine login olur ve oturum bilgilerini döner
+        /// </summary>
+        public async Task<ApiResponse<string>> LoginToKbsAsync(string username, string password, string tesisKodu)
+        {
+            try
+            {
+                _logger.LogInformation("KBS sistemine login işlemi yapılıyor");
+                
+                // Henüz implement edilmedi
+                var response = new ApiResponse<string>();
+                response.IsSuccess = false;
+                response.Message = "KBS entegrasyonu henüz tamamlanmadı";
+                response.Data = null;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "KBS login işlemi sırasında hata oluştu");
+                var response = new ApiResponse<string>();
+                response.IsSuccess = false;
+                response.Message = $"KBS login işlemi sırasında hata: {ex.Message}";
+                response.Data = null;
+                return response;
+            }
+        }
+
+        /// <summary>
+        /// Daire sahibini KBS'ye bildirir
+        /// </summary>
+        public async Task<ApiResponse<bool>> ReportOwnerToKbsAsync(Kullanici user, Apartment apartment)
+        {
+            try
+            {
+                _logger.LogInformation("Daire sahibi KBS'ye bildiriliyor. Kullanıcı: {User}, Daire: {Apartment}", 
+                    user.Id, apartment.Id);
+                
+                // Henüz implement edilmedi
+                var response = new ApiResponse<bool>();
+                response.IsSuccess = false;
+                response.Message = "KBS entegrasyonu henüz tamamlanmadı";
+                response.Data = false;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Daire sahibi KBS'ye bildirilirken hata oluştu. Kullanıcı: {User}, Daire: {Apartment}", 
+                    user.Id, apartment.Id);
+                
+                var response = new ApiResponse<bool>();
+                response.IsSuccess = false;
+                response.Message = $"KBS bildirim işlemi sırasında hata: {ex.Message}";
+                response.Data = false;
+                return response;
+            }
+        }
+
+        /// <summary>
+        /// Kiracıyı KBS'ye bildirir
+        /// </summary>
+        public async Task<ApiResponse<bool>> ReportTenantToKbsAsync(Kullanici user, Apartment apartment, DateTime startDate)
+        {
+            try
+            {
+                _logger.LogInformation("Kiracı KBS'ye bildiriliyor. Kullanıcı: {User}, Daire: {Apartment}", 
+                    user.Id, apartment.Id);
+                
+                // Henüz implement edilmedi
+                var response = new ApiResponse<bool>();
+                response.IsSuccess = false;
+                response.Message = "KBS entegrasyonu henüz tamamlanmadı";
+                response.Data = false;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Kiracı KBS'ye bildirilirken hata oluştu. Kullanıcı: {User}, Daire: {Apartment}", 
+                    user.Id, apartment.Id);
+                
+                var response = new ApiResponse<bool>();
+                response.IsSuccess = false;
+                response.Message = $"KBS bildirim işlemi sırasında hata: {ex.Message}";
+                response.Data = false;
+                return response;
+            }
+        }
+
+        /// <summary>
+        /// Aile üyesini KBS'ye bildirir
+        /// </summary>
+        public async Task<ApiResponse<bool>> ReportFamilyMemberToKbsAsync(FamilyMember familyMember, Apartment apartment)
+        {
+            try
+            {
+                _logger.LogInformation("Aile üyesi KBS'ye bildiriliyor. Üye: {Member}, Daire: {Apartment}", 
+                    familyMember.Id, apartment.Id);
+                
+                // Henüz implement edilmedi
+                var response = new ApiResponse<bool>();
+                response.IsSuccess = false;
+                response.Message = "KBS entegrasyonu henüz tamamlanmadı";
+                response.Data = false;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Aile üyesi KBS'ye bildirilirken hata oluştu. Üye: {Member}, Daire: {Apartment}", 
+                    familyMember.Id, apartment.Id);
+                
+                var response = new ApiResponse<bool>();
+                response.IsSuccess = false;
+                response.Message = $"KBS bildirim işlemi sırasında hata: {ex.Message}";
+                response.Data = false;
+                return response;
+            }
         }
 
         // KBS bildirimleri listele (filtreleme ve sayfalama ile)

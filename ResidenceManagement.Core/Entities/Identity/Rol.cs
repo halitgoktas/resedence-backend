@@ -49,6 +49,11 @@ namespace ResidenceManagement.Core.Entities.Identity
         public bool SistemRolu { get; set; }
 
         /// <summary>
+        /// Gösterim sırası
+        /// </summary>
+        public int DisplayOrder { get; set; }
+
+        /// <summary>
         /// Bu role atanmış kullanıcılar
         /// </summary>
         public virtual ICollection<Kullanici> Kullanicilar { get; set; }

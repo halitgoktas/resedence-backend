@@ -14,6 +14,9 @@ using System.Security.Cryptography;
 using System.Text;
 using ResidenceManagement.Core.Interfaces;
 using System.Linq;
+using ResidenceManagement.Core.Interfaces.Logging;
+using System.Net;
+using System.Diagnostics;
 
 namespace ResidenceManagement.Infrastructure.Services
 {
@@ -28,6 +31,10 @@ namespace ResidenceManagement.Infrastructure.Services
         private readonly IRepository<Rol> _roleRepository;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthenticationService> _logger;
+        private readonly IUserService _userService;
+        private readonly ITokenService _tokenService;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IPerformanceMetricsLoggingService _performanceLogger;
 
         /// <summary>
         /// AuthenticationService constructor
@@ -38,7 +45,11 @@ namespace ResidenceManagement.Infrastructure.Services
             IRepository<UserRole> userRoleRepository,
             IRepository<Rol> roleRepository,
             IConfiguration configuration,
-            ILogger<AuthenticationService> logger)
+            ILogger<AuthenticationService> logger,
+            IUserService userService,
+            ITokenService tokenService,
+            IUnitOfWork unitOfWork,
+            IPerformanceMetricsLoggingService performanceLogger)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
@@ -46,94 +57,74 @@ namespace ResidenceManagement.Infrastructure.Services
             _roleRepository = roleRepository;
             _configuration = configuration;
             _logger = logger;
+            _userService = userService;
+            _tokenService = tokenService;
+            _unitOfWork = unitOfWork;
+            _performanceLogger = performanceLogger;
         }
 
         /// <inheritdoc/>
-        public async Task<ApiResponse<TokenResponse>> LoginAsync(LoginRequest request)
+        public async Task<ApiResponse<TokenResponse>> LoginAsync(LoginRequest loginRequest)
         {
             try
             {
-                // Kullanıcı adı veya e-posta ile kullanıcıyı bul
-                var user = await _userRepository.GetFirstOrDefaultAsync(u => 
-                    u.KullaniciAdi == request.UserName || u.Email == request.UserName);
-
-                // Kullanıcı bulunamadıysa veya aktif değilse
-                if (user == null || !user.IsActive)
+                // Kullanıcı adı veya email ile kullanıcıyı bul
+                var user = await _userRepository.GetFirstOrDefaultAsync(u =>
+                    u.KullaniciAdi == loginRequest.UserName || u.Email == loginRequest.UserName);
+                
+                if (user == null)
                 {
-                    return new ApiResponse<TokenResponse>
-                    {
-                        Success = false,
-                        Message = "Kullanıcı adı, e-posta veya şifre hatalı.",
-                        StatusCode = 401
-                    };
+                    _logger.LogWarning($"Giriş başarısız: Kullanıcı adı bulunamadı - {loginRequest.UserName}");
+                    return ApiResponse<TokenResponse>.Failure("Kullanıcı adı veya şifre hatalı.", HttpStatusCode.Unauthorized);
                 }
 
-                // Şifre doğrulama
-                if (!VerifyPasswordHash(request.Password, user.Sifre, user.SifreSalt))
+                // Kullanıcı aktif değilse
+                if (!user.IsActive)
                 {
-                    return new ApiResponse<TokenResponse>
-                    {
-                        Success = false,
-                        Message = "Kullanıcı adı, e-posta veya şifre hatalı.",
-                        StatusCode = 401
-                    };
+                    _logger.LogWarning($"Giriş başarısız: Kullanıcı aktif değil - {loginRequest.UserName}");
+                    return ApiResponse<TokenResponse>.Failure("Hesabınız devre dışı bırakılmıştır. Lütfen yönetici ile iletişime geçin.", HttpStatusCode.Unauthorized);
                 }
 
-                // Kullanıcının rollerini al
-                var userRoles = await _userRoleRepository.GetAllAsync(ur => ur.KullaniciId == user.Id);
-                var roleIds = userRoles.Select(ur => ur.RolId).ToList();
-
-                // roles listesini birleştirmek için yeni bir liste oluştur
-                var roles = new List<Rol>();
-
-                // Her bir roleId için rol bul
-                foreach (var roleId in roleIds)
+                // Şifreyi doğrula
+                if (!VerifyPasswordHash(loginRequest.Password, user.Sifre, user.SifreSalt))
                 {
-                    var role = await _roleRepository.GetFirstOrDefaultAsync(r => r.Id.ToString() == roleId.ToString());
-                    if (role != null)
-                    {
-                        roles.Add(role);
-                    }
+                    _logger.LogWarning($"Giriş başarısız: Şifre hatalı - {loginRequest.UserName}");
+                    return ApiResponse<TokenResponse>.Failure("Kullanıcı adı veya şifre hatalı.", HttpStatusCode.Unauthorized);
                 }
 
-                // Token ve refresh token oluştur
-                var jwtToken = GenerateJwtToken(user, roles.Select(r => r.RolAdi).ToList());
-                var refreshToken = GenerateRefreshToken();
+                // IP adresi
+                string ipAddress = "127.0.0.1"; // Default değer, gerçek IP adresi controller'dan gelebilir
 
-                // Refresh token veritabanına kaydet
-                var refreshTokenEntity = new RefreshToken
-                {
-                    Token = refreshToken,
-                    ExpirationDate = DateTime.UtcNow.AddDays(7),
-                    CreatedByIp = "127.0.0.1", // IP bilgisi request'ten alınabilir
-                    KullaniciId = user.Id,
-                    FirmaId = user.FirmaId,
-                    SubeId = user.SubeId
-                };
+                // Token oluştur
+                var tokens = await _tokenService.GenerateTokensAsync(user, ipAddress);
 
-                await _refreshTokenRepository.AddAsync(refreshTokenEntity);
-                await _refreshTokenRepository.SaveChangesAsync();
+                // Kullanıcının son giriş bilgilerini güncelle
+                user.SonGirisTarihi = DateTime.UtcNow;
+                await _userRepository.UpdateAsync(user);
+                await _unitOfWork.SaveChangesAsync();
+
+                var stopwatch = Stopwatch.StartNew();
+                stopwatch.Stop();
+                _performanceLogger.MeasureExecutionTime("LoginAsync", () => { }, $"Duration: {stopwatch.ElapsedMilliseconds}ms");
 
                 return new ApiResponse<TokenResponse>
                 {
-                    Success = true,
-                    Message = "Giriş başarılı.",
-                    Data = new TokenResponse
-                    {
-                        Token = jwtToken,
-                        RefreshToken = refreshToken,
-                        ExpiresIn = 3600 // Token geçerlilik süresi (saniye)
-                    }
+                    IsSuccess = true,
+                    Message = "Giriş başarılı",
+                    Data = tokens,
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Login sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                _logger.LogError(ex, $"Login sırasında hata oluştu: {ex.Message}");
+                _performanceLogger.MeasureExecutionTime("Login", () => { }, $"Duration: {Stopwatch.GetTimestamp()}ms");
+                
                 return new ApiResponse<TokenResponse>
                 {
-                    Success = false,
-                    Message = "Giriş işlemi sırasında bir hata oluştu.",
-                    StatusCode = 500
+                    IsSuccess = false,
+                    Message = "Giriş işlemi sırasında bir hata oluştu",
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -152,9 +143,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<TokenResponse>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Geçersiz refresh token.",
-                        StatusCode = 401
+                        StatusCode = HttpStatusCode.Unauthorized
                     };
                 }
 
@@ -163,9 +154,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<TokenResponse>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Refresh token süresi dolmuş veya geçersiz kılınmış.",
-                        StatusCode = 401
+                        StatusCode = HttpStatusCode.Unauthorized
                     };
                 }
 
@@ -175,9 +166,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<TokenResponse>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı veya hesap aktif değil.",
-                        StatusCode = 401
+                        StatusCode = HttpStatusCode.Unauthorized
                     };
                 }
 
@@ -224,9 +215,13 @@ namespace ResidenceManagement.Infrastructure.Services
                 await _refreshTokenRepository.AddAsync(newRefreshTokenEntity);
                 await _refreshTokenRepository.SaveChangesAsync();
 
+                var stopwatch = Stopwatch.StartNew();
+                stopwatch.Stop();
+                _performanceLogger.MeasureExecutionTime("RefreshToken", () => { }, $"Duration: {stopwatch.ElapsedMilliseconds}ms");
+
                 return new ApiResponse<TokenResponse>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Token yenilendi.",
                     Data = new TokenResponse
                     {
@@ -239,11 +234,12 @@ namespace ResidenceManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Token yenileme sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                _performanceLogger.MeasureExecutionTime("RefreshToken", () => { }, $"Duration: {Stopwatch.GetTimestamp()}ms");
                 return new ApiResponse<TokenResponse>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Token yenileme sırasında bir hata oluştu.",
-                    StatusCode = 500
+                    StatusCode = HttpStatusCode.InternalServerError
                 };
             }
         }
@@ -262,9 +258,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Geçersiz refresh token.",
-                        StatusCode = 404
+                        StatusCode = HttpStatusCode.Unauthorized
                     };
                 }
 
@@ -273,9 +269,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Refresh token zaten geçersiz kılınmış.",
-                        StatusCode = 400
+                        StatusCode = HttpStatusCode.BadRequest
                     };
                 }
 
@@ -290,7 +286,7 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<bool>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Token başarıyla geçersiz kılındı.",
                     Data = true
                 };
@@ -298,11 +294,12 @@ namespace ResidenceManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Token geçersiz kılma sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                _performanceLogger.MeasureExecutionTime("RevokeToken", () => { }, $"Duration: {Stopwatch.GetTimestamp()}ms");
                 return new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Token geçersiz kılma sırasında bir hata oluştu.",
-                    StatusCode = 500
+                    StatusCode = HttpStatusCode.InternalServerError
                 };
             }
         }
@@ -318,9 +315,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<UserInfoResponse>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı.",
-                        StatusCode = 404
+                        StatusCode = HttpStatusCode.NotFound
                     };
                 }
 
@@ -357,7 +354,7 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<UserInfoResponse>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Kullanıcı bilgileri başarıyla getirildi.",
                     Data = userInfo
                 };
@@ -365,11 +362,12 @@ namespace ResidenceManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Kullanıcı bilgileri getirme sırasında hata oluştu: {ErrorMessage}", ex.Message);
+                _performanceLogger.MeasureExecutionTime("GetUserInfo", () => { }, $"Duration: {Stopwatch.GetTimestamp()}ms");
                 return new ApiResponse<UserInfoResponse>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı bilgileri getirme sırasında bir hata oluştu.",
-                    StatusCode = 500
+                    StatusCode = HttpStatusCode.InternalServerError
                 };
             }
         }

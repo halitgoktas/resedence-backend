@@ -7,7 +7,7 @@
   - [x] Token validasyon middleware
   - [x] Role-based ve policy-based authorization
   - [x] Kullanıcı giriş/çıkış işlemleri
-  - [ ] Şifre sıfırlama mekanizması
+  - [x] Şifre sıfırlama mekanizması
 
 - [x] **API Yapılandırma**
   - [x] CORS politikalarının ayarlanması
@@ -16,40 +16,40 @@
   - [x] HTTP metot kullanım standartları (GET, POST, PUT, DELETE)
   - [x] API Rate limiting
 
-- [ ] **Hata Yönetimi**
+- [x] **Hata Yönetimi**
   - [x] Global exception handler middleware
   - [x] İş kuralları için custom exception sınıfları
   - [x] Hata kod standardı ve hata mesajları dictionary'si
   - [x] HTTP status code standartlarının belirlenmesi
   - [x] Validasyon hatalarının standardizasyonu
 
-- [ ] **Loglama**
-  - [ ] Serilog kütüphanesinin entegrasyonu
-  - [ ] Farklı log seviyeleri (Debug, Info, Warning, Error, Fatal)
-  - [ ] Yapılandırılabilir log hedefleri (dosya, veritabanı, console)
-  - [ ] Request/response loglama
-  - [ ] Performans metriklerinin loglanması
+- [x] **Loglama**
+  - [x] Serilog kütüphanesinin entegrasyonu
+  - [x] Farklı log seviyeleri (Debug, Info, Warning, Error, Fatal)
+  - [x] Yapılandırılabilir log hedefleri (dosya, veritabanı, console)
+  - [x] Request/response loglama
+  - [x] Performans metriklerinin loglanması
 
-- [ ] **Response Standardizasyonu**
+- [x] **Response Standardizasyonu**
   - [x] Standard API response model yapısı
   - [x] Başarı/hata yanıtları için tek tip format
-  - [ ] Pagination (sayfalama) standartları
-  - [ ] Sorting (sıralama) standartları
-  - [ ] Filtering (filtreleme) standartları
+  - [x] Pagination (sayfalama) standartları
+  - [x] Sorting (sıralama) standartları
+  - [x] Filtering (filtreleme) standartları
 
 ## 2. Veri Tabanı ve Migrasyon İşlemleri
 
-- [ ] **Entity Framework Core Yapılandırması**
-  - [ ] DbContext optimizasyonu
-  - [ ] İlişki yapılandırmaları (Fluent API)
-  - [ ] Indexes ve performans optimizasyonları
-  - [ ] Multi-tenant filtreleme mekanizması
+- [x] **Entity Framework Core Yapılandırması**
+  - [x] DbContext optimizasyonu
+  - [x] İlişki yapılandırmaları (Fluent API)
+  - [x] Indexes ve performans optimizasyonları
+  - [x] Multi-tenant filtreleme mekanizması
 
 - [ ] **Migrations**
   - [ ] InitialCreate migrasyonu oluşturma
-  - [ ] Test/Dev/Prod ortamları için migrasyon stratejisi
-  - [ ] Migrasyon scriptlerinin yönetimi ve versiyonlanması
-  - [ ] Migrasyon günlükleri ve geri alma mekanizması
+  - [x] Test/Dev/Prod ortamları için migrasyon stratejisi
+  - [x] Migrasyon scriptlerinin yönetimi ve versiyonlanması
+  - [x] Migrasyon günlükleri ve geri alma mekanizması
 
 - [ ] **Seed Data**
   - [ ] Admin kullanıcıları ve roller
@@ -163,7 +163,7 @@
 
 - [ ] **API Güvenliği**
   - [ ] API key yönetimi
-  - [ ] Rate limiting
+  - [x] Rate limiting
   - [ ] IP bazlı kısıtlamalar
   - [ ] Audit logging
 

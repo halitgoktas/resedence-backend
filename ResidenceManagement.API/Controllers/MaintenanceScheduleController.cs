@@ -275,8 +275,8 @@ namespace ResidenceManagement.API.Controllers
                 
                 var response = await _maintenanceService.UpdateMaintenanceChecklistAsync(id, model);
                 
-                if (!response.Success)
-                    return StatusCode(response.StatusCode, response);
+                if (!response.IsSuccess)
+                    return StatusCode((int)response.StatusCode, response);
                 
                 return Ok(response);
             }
@@ -300,8 +300,8 @@ namespace ResidenceManagement.API.Controllers
                 
                 var response = await _maintenanceService.AddMaintenanceDocumentAsync(id, model);
                 
-                if (!response.Success)
-                    return StatusCode(response.StatusCode, response);
+                if (!response.IsSuccess)
+                    return StatusCode((int)response.StatusCode, response);
                 
                 return Ok(response);
             }

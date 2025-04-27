@@ -42,6 +42,9 @@ namespace ResidenceManagement.Core.Interfaces
         // FindAsync - Filtrelenmiş varlıkları getir (UserService ve TokenService'de kullanılıyor)
         Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> predicate);
         
+        // IQueryable döndür (sayfalama ve ileri sorgular için)
+        IQueryable<T> GetQueryable();
+        
         // Varlık ekle
         Task<T> AddAsync(T entity);
         

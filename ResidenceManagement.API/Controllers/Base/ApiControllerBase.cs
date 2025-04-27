@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using ResidenceManagement.Core.Common;
 using ResidenceManagement.Core.Constants;
+using System.Net;
 
 namespace ResidenceManagement.API.Controllers.Base
 {
@@ -21,7 +22,7 @@ namespace ResidenceManagement.API.Controllers.Base
         /// <returns>API yanıtı</returns>
         protected IActionResult Success<T>(T data, string message = null)
         {
-            return Ok(ApiResponse<T>.CreateSuccess(data, message));
+            return Ok(ApiResponse<T>.Success(data, message));
         }
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace ResidenceManagement.API.Controllers.Base
         /// <returns>API yanıtı</returns>
         protected IActionResult Success(string message = null)
         {
-            return Ok(ApiResponse.CreateSuccess(message));
+            return Ok(ApiResponse.Success(message));
         }
 
         /// <summary>
@@ -42,7 +43,8 @@ namespace ResidenceManagement.API.Controllers.Base
         /// <returns>API yanıtı</returns>
         protected IActionResult Failure(string message, int statusCode = 400)
         {
-            return StatusCode(statusCode, ApiResponse.CreateFail(message, statusCode, 0));
+            var httpStatusCode = (HttpStatusCode)statusCode;
+            return StatusCode(statusCode, ApiResponse.Failure(message, httpStatusCode));
         }
 
         /// <summary>

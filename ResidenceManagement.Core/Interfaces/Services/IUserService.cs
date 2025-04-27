@@ -33,6 +33,14 @@ namespace ResidenceManagement.Core.Interfaces.Services
         Task<ApiResponse<List<UserDto>>> GetAllUsersAsync();
         
         /// <summary>
+        /// Tüm kullanıcıları sayfalanmış olarak listeler
+        /// </summary>
+        /// <param name="pageNumber">Sayfa numarası</param>
+        /// <param name="pageSize">Sayfa başına kayıt sayısı</param>
+        /// <returns>Sayfalanmış kullanıcı listesi</returns>
+        Task<PagedApiResponse<UserDto>> GetPagedUsersAsync(int pageNumber, int pageSize);
+        
+        /// <summary>
         /// ID ile kullanıcı getirir
         /// </summary>
         /// <param name="id">Kullanıcı ID</param>

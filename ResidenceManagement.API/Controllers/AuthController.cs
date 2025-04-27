@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResidenceManagement.Core.Common;
 using ResidenceManagement.Core.DTOs.Authentication;
+using ResidenceManagement.Core.DTOs.User;
 using ResidenceManagement.Core.Interfaces.Services;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -13,11 +15,13 @@ namespace ResidenceManagement.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthenticationService _authService;
+        private readonly IUserService _userService;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthenticationService authService, ILogger<AuthController> logger)
+        public AuthController(IAuthenticationService authService, IUserService userService, ILogger<AuthController> logger)
         {
             _authService = authService;
+            _userService = userService;
             _logger = logger;
         }
 
@@ -35,9 +39,9 @@ namespace ResidenceManagement.API.Controllers
         {
             var response = await _authService.LoginAsync(loginRequest);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
-                return response.StatusCode switch
+                return (int)response.StatusCode switch
                 {
                     401 => Unauthorized(response),
                     _ => BadRequest(response)
@@ -60,7 +64,7 @@ namespace ResidenceManagement.API.Controllers
         {
             var response = await _authService.RefreshTokenAsync(refreshRequest);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return BadRequest(response);
             }
@@ -88,18 +92,14 @@ namespace ResidenceManagement.API.Controllers
 
             if (string.IsNullOrEmpty(token))
             {
-                return BadRequest(new ApiResponse<bool>
-                {
-                    Success = false,
-                    Message = "Token bilgisi gereklidir",
-                    Data = false,
-                    StatusCode = 400
-                });
+                return BadRequest(ApiResponse<bool>.Failure(
+                    message: "Token bilgisi gereklidir",
+                    statusCode: HttpStatusCode.BadRequest));
             }
 
             var response = await _authService.RevokeTokenAsync(token);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return BadRequest(response);
             }
@@ -120,19 +120,82 @@ namespace ResidenceManagement.API.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int id))
             {
-                return BadRequest(new ApiResponse<UserInfoResponse>
-                {
-                    Success = false,
-                    Message = "Kullanıcı bilgisi bulunamadı",
-                    StatusCode = 400
-                });
+                return BadRequest(ApiResponse<UserInfoResponse>.Failure(
+                    message: "Kullanıcı bilgisi bulunamadı",
+                    statusCode: HttpStatusCode.BadRequest));
             }
 
             var response = await _authService.GetUserInfoAsync(id);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return NotFound(response);
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Şifremi unuttum işlemi
+        /// </summary>
+        /// <param name="request">Kullanıcı email adresi</param>
+        /// <returns>İşlem sonucu</returns>
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                return BadRequest(ApiResponse<bool>.Failure(
+                    message: "Email adresi gereklidir",
+                    statusCode: HttpStatusCode.BadRequest));
+            }
+
+            var response = await _userService.ForgotPasswordAsync(request.Email);
+
+            if (!response.IsSuccess)
+            {
+                return (int)response.StatusCode switch
+                {
+                    404 => NotFound(response),
+                    _ => StatusCode((int)response.StatusCode, response)
+                };
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Şifre sıfırlama işlemi
+        /// </summary>
+        /// <param name="request">Sıfırlama token ve yeni şifre bilgileri</param>
+        /// <returns>İşlem sonucu</returns>
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return BadRequest(ApiResponse<bool>.Failure(
+                    message: "Token ve yeni şifre bilgileri gereklidir",
+                    statusCode: HttpStatusCode.BadRequest));
+            }
+
+            var response = await _userService.ResetPasswordAsync(request.Token, request.NewPassword);
+
+            if (!response.IsSuccess)
+            {
+                return (int)response.StatusCode switch
+                {
+                    400 => BadRequest(response),
+                    _ => StatusCode((int)response.StatusCode, response)
+                };
             }
 
             return Ok(response);

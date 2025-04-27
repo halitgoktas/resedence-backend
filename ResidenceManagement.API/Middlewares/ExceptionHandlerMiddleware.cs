@@ -40,7 +40,7 @@ namespace ResidenceManagement.API.Middlewares
             context.Response.ContentType = "application/json";
             var response = new ApiResponse<object>
             {
-                Success = false,
+                IsSuccess = false,
                 Data = null
             };
 
@@ -80,8 +80,12 @@ namespace ResidenceManagement.API.Middlewares
             }
 
             context.Response.StatusCode = (int)statusCode;
-            response.StatusCode = (int)statusCode;
-            response.ErrorCode = errorCode;
+            response.StatusCode = statusCode;
+            
+            if (!string.IsNullOrEmpty(errorCode.ToString()))
+            {
+                response.Errors.Add($"Error code: {errorCode}");
+            }
 
             var jsonOptions = new JsonSerializerOptions
             {

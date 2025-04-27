@@ -1,27 +1,23 @@
-using System;
+using FluentValidation;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentValidation;
-using Microsoft.Extensions.Logging;
 
 namespace ResidenceManagement.Core.Common
 {
     /// <summary>
     /// FluentValidation için validasyon hatalarını ApiResponse formatına dönüştüren işleyici sınıf
     /// </summary>
-    public class ValidationBehavior<TRequest, TResponse> where TResponse : class
+    public class ValidationBehavior<TRequest, TResponse>
+        where TRequest : class
     {
         private readonly IEnumerable<IValidator<TRequest>> _validators;
-        private readonly ILogger<ValidationBehavior<TRequest, TResponse>> _logger;
 
-        public ValidationBehavior(
-            IEnumerable<IValidator<TRequest>> validators,
-            ILogger<ValidationBehavior<TRequest, TResponse>> logger)
+        public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
         {
             _validators = validators;
-            _logger = logger;
         }
 
         /// <summary>
@@ -35,32 +31,27 @@ namespace ResidenceManagement.Core.Common
             }
 
             var context = new ValidationContext<TRequest>(request);
-            var validationResults = await Task.WhenAll(
-                _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
-
-            var failures = validationResults
-                .SelectMany(r => r.Errors)
-                .Where(f => f != null)
-                .ToList();
+            var validationResults = await Task.WhenAll(_validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+            var failures = validationResults.SelectMany(r => r.Errors).Where(f => f != null).ToList();
 
             if (failures.Count == 0)
             {
                 return null;
             }
 
-            _logger.LogWarning("Validation errors occurred for {RequestType}: {Errors}", 
-                typeof(TRequest).Name, 
-                string.Join(", ", failures.Select(x => x.ErrorMessage)));
+            var errorMessages = failures.Select(f => $"{f.PropertyName}: {f.ErrorMessage}").ToList();
+            return ApiResponse.Failure("Doğrulama hataları oluştu.", HttpStatusCode.BadRequest);
+        }
 
-            var errorMessages = failures
-                .Select(f => $"{f.PropertyName}: {f.ErrorMessage}")
-                .ToList();
+        public async Task<ApiResponse<T>> ValidateAsync<T>(TRequest request, CancellationToken cancellationToken = default)
+        {
+            var response = await ValidateAsync(request, cancellationToken);
+            if (response == null)
+            {
+                return null;
+            }
 
-            return ApiResponse.CreateFail(
-                message: "Doğrulama hataları oluştu.",
-                statusCode: 400,
-                errorCode: 400,
-                errors: errorMessages);
+            return ApiResponse<T>.Failure("Doğrulama hataları oluştu.", HttpStatusCode.BadRequest);
         }
     }
 }

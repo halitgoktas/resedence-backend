@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using ResidenceManagement.Core.Common;
 using ResidenceManagement.Core.DTOs.Authentication;
 using ResidenceManagement.Core.Interfaces.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -43,14 +47,14 @@ namespace ResidenceManagement.API.Controllers.V2
 
             var response = await _authService.LoginAsync(loginRequest);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
-                if (response.StatusCode == 429)
+                if ((int)response.StatusCode == 429)
                 {
                     return StatusCode(429, response);
                 }
                 
-                return response.StatusCode switch
+                return (int)response.StatusCode switch
                 {
                     401 => Unauthorized(response),
                     _ => BadRequest(response)
@@ -81,7 +85,7 @@ namespace ResidenceManagement.API.Controllers.V2
             
             var response = await _authService.RefreshTokenAsync(refreshRequest);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return BadRequest(response);
             }
@@ -111,10 +115,10 @@ namespace ResidenceManagement.API.Controllers.V2
             {
                 return BadRequest(new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Token bilgisi gereklidir",
                     Data = false,
-                    StatusCode = 400
+                    StatusCode = HttpStatusCode.BadRequest
                 });
             }
 
@@ -124,7 +128,7 @@ namespace ResidenceManagement.API.Controllers.V2
 
             var response = await _authService.RevokeTokenAsync(token);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return BadRequest(response);
             }
@@ -147,15 +151,15 @@ namespace ResidenceManagement.API.Controllers.V2
             {
                 return BadRequest(new ApiResponse<UserInfoResponse>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı bilgisi bulunamadı",
-                    StatusCode = 400
+                    StatusCode = HttpStatusCode.BadRequest
                 });
             }
 
             var response = await _authService.GetUserInfoAsync(id);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return NotFound(response);
             }
@@ -178,9 +182,9 @@ namespace ResidenceManagement.API.Controllers.V2
             {
                 return BadRequest(new ApiResponse<object>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı bilgisi bulunamadı",
-                    StatusCode = 400
+                    StatusCode = HttpStatusCode.BadRequest
                 });
             }
 
@@ -206,10 +210,10 @@ namespace ResidenceManagement.API.Controllers.V2
 
             var response = new ApiResponse<List<LoginHistoryDto>>
             {
-                Success = true,
+                IsSuccess = true,
                 Message = "Oturum açma geçmişi başarıyla getirildi",
                 Data = loginHistory,
-                StatusCode = 200
+                StatusCode = HttpStatusCode.OK
             };
 
             return Ok(response);

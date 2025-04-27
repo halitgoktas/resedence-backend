@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using ResidenceManagement.Core.Common;
 using ResidenceManagement.Core.DTOs.User;
 using ResidenceManagement.Core.Interfaces.Services;
+using System.Net;
 
 namespace ResidenceManagement.API.Controllers.V1
 {
@@ -36,32 +37,24 @@ namespace ResidenceManagement.API.Controllers.V1
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<bool>
-                {
-                    Success = false,
-                    Message = "Validasyon hatası",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
+                return BadRequest(ApiResponse<bool>.Failure(
+                    message: "Validasyon hatası",
+                    statusCode: HttpStatusCode.BadRequest));
             }
             
             var response = await _userService.ForgotPasswordAsync(forgotPasswordDto.Email);
             
             // Güvenlik nedeniyle, kullanıcı olsun veya olmasın aynı başarılı yanıtı döndürüyoruz
             // Böylece kötü niyetli kişiler sistemdeki email adreslerini tespit edemezler
-            if (response.StatusCode == StatusCodes.Status404NotFound)
+            if ((int)response.StatusCode == StatusCodes.Status404NotFound)
             {
                 _logger.LogWarning($"Olmayan bir email için şifre sıfırlama isteği: {forgotPasswordDto.Email}");
-                return Ok(new ApiResponse<bool>
-                {
-                    Success = true,
-                    Message = "Şifre sıfırlama bağlantısı email adresinize gönderildi",
-                    Data = true,
-                    StatusCode = StatusCodes.Status200OK
-                });
+                return Ok(ApiResponse<bool>.Success(
+                    data: true,
+                    message: "Şifre sıfırlama bağlantısı email adresinize gönderildi"));
             }
             
-            return StatusCode(response.StatusCode, response);
+            return StatusCode((int)response.StatusCode, response);
         }
         
         /// <summary>
@@ -77,18 +70,14 @@ namespace ResidenceManagement.API.Controllers.V1
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<bool>
-                {
-                    Success = false,
-                    Message = "Validasyon hatası",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
+                return BadRequest(ApiResponse<bool>.Failure(
+                    message: "Validasyon hatası", 
+                    statusCode: HttpStatusCode.BadRequest));
             }
             
             var response = await _userService.ResetPasswordAsync(resetPasswordDto.Token, resetPasswordDto.NewPassword);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return BadRequest(response);
             }

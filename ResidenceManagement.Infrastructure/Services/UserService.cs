@@ -12,6 +12,7 @@ using ResidenceManagement.Core.Entities.Identity;
 using ResidenceManagement.Core.Interfaces;
 using ResidenceManagement.Core.Interfaces.Repositories;
 using ResidenceManagement.Core.Interfaces.Services;
+using System.Net;
 
 namespace ResidenceManagement.Infrastructure.Services
 {
@@ -77,10 +78,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<List<UserDto>>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Kullanıcılar başarıyla listelendi",
                     Data = userDtos,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -88,9 +89,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Kullanıcılar listelenirken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<List<UserDto>>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcılar listelenirken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -106,9 +107,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<UserDto>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı",
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -116,10 +117,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<UserDto>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Kullanıcı başarıyla getirildi",
                     Data = userDto,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -127,9 +128,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Kullanıcı getirilirken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<UserDto>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı getirilirken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -151,9 +152,9 @@ namespace ResidenceManagement.Infrastructure.Services
 
                     return new ApiResponse<UserDto>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = errorMessage,
-                        StatusCode = 400
+                        StatusCode = (HttpStatusCode)400
                     };
                 }
 
@@ -187,10 +188,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<UserDto>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Kullanıcı başarıyla oluşturuldu",
                     Data = userDto,
-                    StatusCode = 201
+                    StatusCode = (HttpStatusCode)201
                 };
             }
             catch (Exception ex)
@@ -198,9 +199,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Kullanıcı oluşturulurken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<UserDto>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı oluşturulurken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -216,9 +217,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<UserDto>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı",
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -230,9 +231,9 @@ namespace ResidenceManagement.Infrastructure.Services
                     {
                         return new ApiResponse<UserDto>
                         {
-                            Success = false,
+                            IsSuccess = false,
                             Message = "Bu e-posta adresi zaten kullanımda",
-                            StatusCode = 400
+                            StatusCode = (HttpStatusCode)400
                         };
                     }
                     kullanici.Email = updateUserDto.Email;
@@ -266,10 +267,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<UserDto>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Kullanıcı başarıyla güncellendi",
                     Data = userDto,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -277,9 +278,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Kullanıcı güncellenirken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<UserDto>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı güncellenirken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -295,10 +296,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı",
                         Data = false,
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -312,10 +313,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<bool>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Kullanıcı başarıyla silindi",
                     Data = true,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -323,10 +324,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Kullanıcı silinirken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı silinirken bir hata oluştu",
                     Data = false,
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -342,10 +343,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı",
                         Data = false,
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -355,10 +356,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Mevcut şifre hatalı",
                         Data = false,
-                        StatusCode = 400
+                        StatusCode = (HttpStatusCode)400
                     };
                 }
 
@@ -372,10 +373,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<bool>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Şifre başarıyla değiştirildi",
                     Data = true,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -383,10 +384,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Şifre değiştirilirken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Şifre değiştirilirken bir hata oluştu",
                     Data = false,
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -402,9 +403,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<List<string>>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı",
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -427,10 +428,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<List<string>>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Kullanıcı rolleri başarıyla getirildi",
                     Data = roleNames,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -438,9 +439,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Kullanıcı rolleri getirilirken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<List<string>>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı rolleri getirilirken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -456,10 +457,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı",
                         Data = false,
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -470,10 +471,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = $"'{roleName}' rolü bulunamadı",
                         Data = false,
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -485,10 +486,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = $"Kullanıcı zaten '{roleName}' rolüne sahip",
                         Data = false,
-                        StatusCode = 400
+                        StatusCode = (HttpStatusCode)400
                     };
                 }
 
@@ -507,10 +508,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<bool>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = $"'{roleName}' rolü kullanıcıya başarıyla atandı",
                     Data = true,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -518,10 +519,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Rol atama sırasında bir hata oluştu: {ex.Message}");
                 return new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Rol atama sırasında bir hata oluştu",
                     Data = false,
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -537,10 +538,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Kullanıcı bulunamadı",
                         Data = false,
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -551,10 +552,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = $"'{roleName}' rolü bulunamadı",
                         Data = false,
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -566,10 +567,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = $"Kullanıcı '{roleName}' rolüne sahip değil",
                         Data = false,
-                        StatusCode = 400
+                        StatusCode = (HttpStatusCode)400
                     };
                 }
 
@@ -579,10 +580,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<bool>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = $"'{roleName}' rolü kullanıcıdan başarıyla kaldırıldı",
                     Data = true,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -590,10 +591,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Rol kaldırma sırasında bir hata oluştu: {ex.Message}");
                 return new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Rol kaldırma sırasında bir hata oluştu",
                     Data = false,
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -609,10 +610,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Bu email adresi ile kayıtlı kullanıcı bulunamadı",
                         Data = false,
-                        StatusCode = 404
+                        StatusCode = (HttpStatusCode)404
                     };
                 }
 
@@ -635,10 +636,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 
                 return new ApiResponse<bool>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Şifre sıfırlama bağlantısı email adresinize gönderildi",
                     Data = true,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -646,10 +647,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Şifre sıfırlama işlemi başlatılırken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Şifre sıfırlama işlemi başlatılırken bir hata oluştu",
                     Data = false,
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
             }
         }
@@ -667,10 +668,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 {
                     return new ApiResponse<bool>
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Geçersiz veya süresi dolmuş token",
                         Data = false,
-                        StatusCode = 400
+                        StatusCode = (HttpStatusCode)400
                     };
                 }
 
@@ -689,10 +690,10 @@ namespace ResidenceManagement.Infrastructure.Services
                 
                 return new ApiResponse<bool>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Şifreniz başarıyla sıfırlandı",
                     Data = true,
-                    StatusCode = 200
+                    StatusCode = (HttpStatusCode)200
                 };
             }
             catch (Exception ex)
@@ -700,11 +701,53 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Şifre sıfırlama işlemi tamamlanırken bir hata oluştu: {ex.Message}");
                 return new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Şifre sıfırlama işlemi tamamlanırken bir hata oluştu",
                     Data = false,
-                    StatusCode = 500
+                    StatusCode = (HttpStatusCode)500
                 };
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<PagedApiResponse<UserDto>> GetPagedUsersAsync(int pageNumber, int pageSize)
+        {
+            try
+            {
+                // Sayfalama parametreleri kontrolü
+                var (validatedPageNumber, validatedPageSize) = PagedList<Kullanici>.ValidateParameters(pageNumber, pageSize);
+                
+                // Kullanıcıları çek
+                var kullaniciQuery = _kullaniciRepository.GetQueryable();
+                
+                // Sayfalı listeyi oluştur
+                var pagedList = await PagedList<Kullanici>.CreateAsync(
+                    kullaniciQuery,
+                    validatedPageNumber,
+                    validatedPageSize);
+                
+                // DTO'lara dönüştür
+                var userDtos = new List<UserDto>();
+                foreach (var kullanici in pagedList)
+                {
+                    var userDto = await MapToUserDtoAsync(kullanici);
+                    userDtos.Add(userDto);
+                }
+                
+                // PagedList<UserDto> oluştur
+                var userDtoPagedList = new PagedList<UserDto>(
+                    userDtos, 
+                    pagedList.TotalCount, 
+                    pagedList.CurrentPage, 
+                    pagedList.PageSize);
+                
+                // PagedApiResponse oluştur
+                return PagedApiResponse<UserDto>.Success(userDtoPagedList, "Kullanıcılar başarıyla listelendi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Kullanıcılar sayfalı olarak listelenirken bir hata oluştu: {ex.Message}");
+                return PagedApiResponse<UserDto>.Failure("Kullanıcılar listelenirken bir hata oluştu", HttpStatusCode.InternalServerError);
             }
         }
 

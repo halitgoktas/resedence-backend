@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using ResidenceManagement.Core.Common;
@@ -27,11 +28,12 @@ namespace ResidenceManagement.API.Extensions
                         .Select(x => x.ErrorMessage)
                         .ToList();
 
-                    var response = ApiResponse.CreateFail(
+                    var response = ApiResponse.Failure(
                         message: "Doğrulama hataları oluştu.",
-                        statusCode: 400,
-                        errorCode: 400,
-                        errors: errors);
+                        statusCode: HttpStatusCode.BadRequest);
+
+                    // Hataları ekle
+                    response.Errors.AddRange(errors);
 
                     return new BadRequestObjectResult(response);
                 };

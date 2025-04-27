@@ -208,6 +208,9 @@ app.UseCustomRequestResponseLogging();
 // CORS Middleware'ini Ekle
 app.UseCors("CorsPolicy");
 
+// Performans metriklerini toplayan middleware'i ekle
+app.UsePerformanceMetrics();
+
 // Rate Limiting Middleware'ini Ekle
 app.UseApiRateLimiting();
 

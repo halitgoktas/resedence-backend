@@ -1,110 +1,240 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Net;
+using System.Text.Json.Serialization;
+using ResidenceManagement.Core.Extensions;
 
 namespace ResidenceManagement.Core.Common
 {
     /// <summary>
-    /// API yanıtları için genel sınıf
+    /// API yanıtları için temel sınıf
     /// </summary>
     public class ApiResponse
     {
-        /// <summary>
-        /// İşlem başarılı mı?
-        /// </summary>
-        public bool Success { get; set; }
+        public ApiResponse() { }
+
+        public ApiResponse(bool isSuccess, string message, HttpStatusCode statusCode = HttpStatusCode.OK)
+        {
+            IsSuccess = isSuccess;
+            Message = message;
+            StatusCode = statusCode;
+        }
 
         /// <summary>
-        /// Mesaj
+        /// İşlemin başarılı olup olmadığı
+        /// </summary>
+        public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// Yanıt mesajı
         /// </summary>
         public string Message { get; set; }
 
         /// <summary>
-        /// HTTP durum kodu
+        /// Yanıtın zamanı
         /// </summary>
-        public int StatusCode { get; set; }
-        
-        /// <summary>
-        /// Hata kodu (başarısız işlemlerde)
-        /// </summary>
-        public int? ErrorCode { get; set; }
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
         /// <summary>
-        /// Veri (object tipinde)
+        /// Yanıtın HTTP durum kodu
         /// </summary>
-        public object Data { get; set; }
+        [JsonIgnore]
+        public HttpStatusCode StatusCode { get; set; }
 
         /// <summary>
         /// Hata listesi
         /// </summary>
         public List<string> Errors { get; set; } = new List<string>();
-        
+
         /// <summary>
         /// Başarılı bir yanıt oluşturur
         /// </summary>
-        public static ApiResponse CreateSuccess(string message = "İşlem başarılı", object data = null)
+        /// <param name="message">Yanıt mesajı</param>
+        /// <returns>Başarılı API yanıtı</returns>
+        public static ApiResponse Success(string message = null)
         {
-            return new ApiResponse
-            {
-                Success = true,
-                Message = message,
-                StatusCode = 200,
-                Data = data
-            };
+            return new ApiResponse(true, message ?? "İşlem başarıyla tamamlandı.");
         }
-        
+
         /// <summary>
         /// Başarısız bir yanıt oluşturur
         /// </summary>
-        public static ApiResponse CreateFail(string message, int statusCode, int errorCode, List<string> errors = null)
+        /// <param name="message">Hata mesajı</param>
+        /// <param name="statusCode">Hata durum kodu</param>
+        /// <returns>Başarısız API yanıtı</returns>
+        public static ApiResponse Failure(string message, HttpStatusCode statusCode = HttpStatusCode.BadRequest)
         {
-            return new ApiResponse
+            return new ApiResponse(false, message, statusCode);
+        }
+    }
+
+    /// <summary>
+    /// Generic veri içeren API yanıtı
+    /// </summary>
+    /// <typeparam name="T">Dönüş verisi tipi</typeparam>
+    public class ApiResponse<T> : ApiResponse
+    {
+        public ApiResponse() : base() { }
+
+        public ApiResponse(bool isSuccess, T data, string message, HttpStatusCode statusCode = HttpStatusCode.OK)
+            : base(isSuccess, message, statusCode)
+        {
+            Data = data;
+        }
+
+        /// <summary>
+        /// Yanıt verisi
+        /// </summary>
+        public T Data { get; set; }
+
+        /// <summary>
+        /// Veri içeren başarılı yanıt oluşturur
+        /// </summary>
+        /// <param name="data">Yanıt verisi</param>
+        /// <param name="message">Yanıt mesajı</param>
+        /// <returns>Başarılı veri içeren API yanıtı</returns>
+        public static ApiResponse<T> Success(T data, string message = null)
+        {
+            return new ApiResponse<T>(true, data, message ?? "İşlem başarıyla tamamlandı.");
+        }
+
+        /// <summary>
+        /// Başarısız bir yanıt oluşturur (veri olmadan)
+        /// </summary>
+        /// <param name="message">Hata mesajı</param>
+        /// <param name="statusCode">Hata durum kodu</param>
+        /// <returns>Başarısız API yanıtı</returns>
+        public static ApiResponse<T> Failure(string message, HttpStatusCode statusCode = HttpStatusCode.BadRequest)
+        {
+            return new ApiResponse<T>(false, default, message, statusCode);
+        }
+    }
+
+    /// <summary>
+    /// Sayfalama bilgilerini içeren metadata sınıfı
+    /// </summary>
+    public class PaginationMetadata
+    {
+        /// <summary>
+        /// Toplam kayıt sayısı
+        /// </summary>
+        public int TotalCount { get; set; }
+
+        /// <summary>
+        /// Sayfa başına kayıt sayısı
+        /// </summary>
+        public int PageSize { get; set; }
+
+        /// <summary>
+        /// Mevcut sayfa numarası
+        /// </summary>
+        public int CurrentPage { get; set; }
+
+        /// <summary>
+        /// Toplam sayfa sayısı
+        /// </summary>
+        public int TotalPages { get; set; }
+
+        /// <summary>
+        /// Önceki sayfa var mı?
+        /// </summary>
+        public bool HasPrevious { get; set; }
+
+        /// <summary>
+        /// Sonraki sayfa var mı?
+        /// </summary>
+        public bool HasNext { get; set; }
+
+        /// <summary>
+        /// PagedList'den metadata oluşturur
+        /// </summary>
+        /// <typeparam name="T">Sayfalanmış liste tipi</typeparam>
+        /// <param name="pagedList">Sayfalanmış liste</param>
+        /// <returns>Sayfalama metadata'sı</returns>
+        public static PaginationMetadata FromPagedList<T>(PagedList<T> pagedList)
+        {
+            return new PaginationMetadata
             {
-                Success = false,
-                Message = message,
-                StatusCode = statusCode,
-                ErrorCode = errorCode,
-                Errors = errors ?? new List<string>()
+                TotalCount = pagedList.TotalCount,
+                PageSize = pagedList.PageSize,
+                CurrentPage = pagedList.CurrentPage,
+                TotalPages = pagedList.TotalPages,
+                HasPrevious = pagedList.HasPrevious,
+                HasNext = pagedList.HasNext
             };
         }
     }
 
     /// <summary>
-    /// Generic veri tipi için API yanıt sınıfı
+    /// Sayfalanmış veri için API yanıtı
     /// </summary>
-    public class ApiResponse<T> : ApiResponse
+    /// <typeparam name="T">Dönüş verisi tipi</typeparam>
+    public class PagedApiResponse<T> : ApiResponse
     {
-        /// <summary>
-        /// Tipli veri
-        /// </summary>
-        public new T Data { get; set; }
-        
-        /// <summary>
-        /// Başarılı bir tipli yanıt oluşturur
-        /// </summary>
-        public static ApiResponse<T> CreateSuccess(T data, string message = "İşlem başarılı")
+        public PagedApiResponse() : base() { }
+
+        public PagedApiResponse(bool isSuccess, PagedList<T> data, string message, HttpStatusCode statusCode = HttpStatusCode.OK)
+            : base(isSuccess, message, statusCode)
         {
-            return new ApiResponse<T>
+            Data = data;
+            if (data != null)
             {
-                Success = true,
-                Message = message,
-                StatusCode = 200,
-                Data = data
-            };
+                Pagination = new PaginationMetadata
+                {
+                    CurrentPage = data.CurrentPage,
+                    PageSize = data.PageSize,
+                    TotalCount = data.TotalCount,
+                    TotalPages = data.TotalPages,
+                    HasNext = data.HasNext,
+                    HasPrevious = data.HasPrevious
+                };
+            }
         }
-        
+
         /// <summary>
-        /// Başarısız bir tipli yanıt oluşturur
+        /// Sayfalanmış veri
         /// </summary>
-        public static ApiResponse<T> CreateFail(string message, int statusCode, int errorCode, List<string> errors = null)
+        public PagedList<T> Data { get; set; }
+
+        /// <summary>
+        /// Sayfalama bilgileri
+        /// </summary>
+        public PaginationMetadata Pagination { get; set; }
+
+        /// <summary>
+        /// Sayfalanmış veri içeren başarılı yanıt oluşturur
+        /// </summary>
+        /// <param name="pagedList">Sayfalanmış liste</param>
+        /// <param name="message">Yanıt mesajı</param>
+        /// <returns>Başarılı sayfalanmış veri içeren API yanıtı</returns>
+        public static PagedApiResponse<T> Success(PagedList<T> pagedList, string message = null)
         {
-            return new ApiResponse<T>
-            {
-                Success = false,
-                Message = message,
-                StatusCode = statusCode,
-                ErrorCode = errorCode,
-                Errors = errors ?? new List<string>(),
-                Data = default
-            };
+            return new PagedApiResponse<T>(true, pagedList, message ?? "İşlem başarıyla tamamlandı.");
+        }
+
+        /// <summary>
+        /// Sayfalama bilgisi ve veri ile başarılı yanıt oluşturur
+        /// </summary>
+        /// <param name="data">Listelenecek veri</param>
+        /// <param name="pagination">Sayfalama bilgileri</param>
+        /// <param name="message">Yanıt mesajı</param>
+        /// <returns>Başarılı sayfalanmış veri içeren API yanıtı</returns>
+        public static PagedApiResponse<T> Success(IEnumerable<T> data, PaginationMetadata pagination, string message = null)
+        {
+            var pagedList = new PagedList<T>(new List<T>(data), pagination.TotalCount, pagination.CurrentPage, pagination.PageSize);
+            return new PagedApiResponse<T>(true, pagedList, message ?? "İşlem başarıyla tamamlandı.");
+        }
+
+        /// <summary>
+        /// Başarısız bir yanıt oluşturur (sayfalanmış veri olmadan)
+        /// </summary>
+        /// <param name="message">Hata mesajı</param>
+        /// <param name="statusCode">Hata durum kodu</param>
+        /// <returns>Başarısız API yanıtı</returns>
+        public static PagedApiResponse<T> Failure(string message, HttpStatusCode statusCode = HttpStatusCode.BadRequest)
+        {
+            return new PagedApiResponse<T>(false, null, message, statusCode);
         }
     }
 } 

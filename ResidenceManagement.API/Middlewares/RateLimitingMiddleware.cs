@@ -91,9 +91,9 @@ namespace ResidenceManagement.API.Middlewares
                 // API Response formatında hata yanıtı oluştur
                 var response = new ApiResponse<object>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = $"Çok fazla istek gönderildi. Lütfen {timeWindow} dakika sonra tekrar deneyin.",
-                    StatusCode = (int)HttpStatusCode.TooManyRequests
+                    StatusCode = HttpStatusCode.TooManyRequests
                 };
 
                 context.Response.ContentType = "application/json";

@@ -36,6 +36,7 @@ namespace ResidenceManagement.Infrastructure.Logging
             // Loglama servislerini kaydet
             services.AddSingleton<ILoggingService, SerilogService>();
             services.AddScoped<IRequestResponseLoggingService, RequestResponseLoggingService>();
+            services.AddScoped<IPerformanceMetricsLoggingService, PerformanceMetricsLoggingService>();
 
             return services;
         }

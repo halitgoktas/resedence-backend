@@ -9,6 +9,7 @@ using ResidenceManagement.Core.Entities;
 using ResidenceManagement.Core.Interfaces.Services;
 using ResidenceManagement.Infrastructure.Data.Context;
 using ResidenceManagement.Core.Common;
+using System.Net;
 
 namespace ResidenceManagement.Infrastructure.Services
 {
@@ -1393,9 +1394,9 @@ namespace ResidenceManagement.Infrastructure.Services
                     _logger.LogWarning("Bakım planı bulunamadı: ScheduleId={ScheduleId}", scheduleId);
                     return new ApiResponse
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Bakım planı bulunamadı",
-                        StatusCode = 404
+                        StatusCode = HttpStatusCode.NotFound
                     };
                 }
 
@@ -1484,9 +1485,9 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Bakım kontrol listesi başarıyla güncellendi",
-                    StatusCode = 200
+                    StatusCode = HttpStatusCode.OK
                 };
             }
             catch (Exception ex)
@@ -1494,9 +1495,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, "Bakım kontrol listesi güncellenirken hata oluştu: ScheduleId={ScheduleId}", scheduleId);
                 return new ApiResponse
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Bakım kontrol listesi güncellenirken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = HttpStatusCode.InternalServerError
                 };
             }
         }
@@ -1514,9 +1515,9 @@ namespace ResidenceManagement.Infrastructure.Services
                     _logger.LogWarning("Bakım planı bulunamadı: ScheduleId={ScheduleId}", scheduleId);
                     return new ApiResponse
                     {
-                        Success = false,
+                        IsSuccess = false,
                         Message = "Bakım planı bulunamadı",
-                        StatusCode = 404
+                        StatusCode = HttpStatusCode.NotFound
                     };
                 }
 
@@ -1556,12 +1557,12 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogInformation("Bakım dokümanı başarıyla eklendi: ScheduleId={ScheduleId}, DocumentId={DocumentId}", 
                     scheduleId, document.Id);
 
-                return new ApiResponse
+                return new ApiResponse<int>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Bakım dokümanı başarıyla eklendi",
-                    Data = new { DocumentId = document.Id },
-                    StatusCode = 200
+                    Data = document.Id,
+                    StatusCode = HttpStatusCode.OK
                 };
             }
             catch (Exception ex)
@@ -1569,9 +1570,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, "Bakım dokümanı eklenirken hata oluştu: ScheduleId={ScheduleId}", scheduleId);
                 return new ApiResponse
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Bakım dokümanı eklenirken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = HttpStatusCode.InternalServerError
                 };
             }
         }
@@ -1614,10 +1615,10 @@ namespace ResidenceManagement.Infrastructure.Services
 
                 return new ApiResponse<List<MaintenanceScheduleListDTO>>
                 {
-                    Success = true,
+                    IsSuccess = true,
                     Message = "Bakım planları başarıyla getirildi",
                     Data = schedules,
-                    StatusCode = 200
+                    StatusCode = HttpStatusCode.OK
                 };
             }
             catch (Exception ex)
@@ -1625,9 +1626,9 @@ namespace ResidenceManagement.Infrastructure.Services
                 _logger.LogError(ex, $"Kullanıcıya atanmış bakım planları getirilirken hata oluştu: UserId={userId}");
                 return new ApiResponse<List<MaintenanceScheduleListDTO>>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Bakım planları getirilirken bir hata oluştu",
-                    StatusCode = 500
+                    StatusCode = HttpStatusCode.InternalServerError
                 };
             }
         }

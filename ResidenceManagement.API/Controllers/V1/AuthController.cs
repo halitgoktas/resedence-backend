@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ResidenceManagement.Core.Common;
 using ResidenceManagement.Core.DTOs.Authentication;
 using ResidenceManagement.Core.Interfaces.Services;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -36,9 +37,9 @@ namespace ResidenceManagement.API.Controllers.V1
         {
             var response = await _authService.LoginAsync(loginRequest);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
-                return response.StatusCode switch
+                return (int)response.StatusCode switch
                 {
                     401 => Unauthorized(response),
                     _ => BadRequest(response)
@@ -61,7 +62,7 @@ namespace ResidenceManagement.API.Controllers.V1
         {
             var response = await _authService.RefreshTokenAsync(refreshRequest);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return BadRequest(response);
             }
@@ -91,16 +92,16 @@ namespace ResidenceManagement.API.Controllers.V1
             {
                 return BadRequest(new ApiResponse<bool>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Token bilgisi gereklidir",
                     Data = false,
-                    StatusCode = 400
+                    StatusCode = (HttpStatusCode)400
                 });
             }
 
             var response = await _authService.RevokeTokenAsync(token);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return BadRequest(response);
             }
@@ -123,15 +124,15 @@ namespace ResidenceManagement.API.Controllers.V1
             {
                 return BadRequest(new ApiResponse<UserInfoResponse>
                 {
-                    Success = false,
+                    IsSuccess = false,
                     Message = "Kullanıcı bilgisi bulunamadı",
-                    StatusCode = 400
+                    StatusCode = (HttpStatusCode)400
                 });
             }
 
             var response = await _authService.GetUserInfoAsync(id);
             
-            if (!response.Success)
+            if (!response.IsSuccess)
             {
                 return NotFound(response);
             }

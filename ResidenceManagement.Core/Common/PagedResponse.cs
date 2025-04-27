@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Text.Json.Serialization;
 
 namespace ResidenceManagement.Core.Common
 {
@@ -7,81 +9,41 @@ namespace ResidenceManagement.Core.Common
     /// Sayfalama özelliği olan API yanıtları için sınıf
     /// </summary>
     /// <typeparam name="T">Döndürülecek veri tipi</typeparam>
-    public class PagedResponse<T> : ApiResponse<List<T>>
+    public class PagedResponse<T> : ApiResponse<IReadOnlyList<T>>
     {
-        /// <summary>
-        /// Mevcut sayfa numarası
-        /// </summary>
-        public int PageNumber { get; set; }
+        public PaginationMetadata Pagination { get; set; }
 
-        /// <summary>
-        /// Sayfa başına kayıt sayısı
-        /// </summary>
-        public int PageSize { get; set; }
+        public PagedResponse() : base() { }
 
-        /// <summary>
-        /// Toplam sayfa sayısı
-        /// </summary>
-        public int TotalPages { get; set; }
-
-        /// <summary>
-        /// Toplam kayıt sayısı
-        /// </summary>
-        public int TotalRecords { get; set; }
-
-        /// <summary>
-        /// Önceki sayfa var mı?
-        /// </summary>
-        public bool HasPreviousPage => PageNumber > 1;
-
-        /// <summary>
-        /// Sonraki sayfa var mı?
-        /// </summary>
-        public bool HasNextPage => PageNumber < TotalPages;
-
-        /// <summary>
-        /// PagedResponse constructor
-        /// </summary>
-        public PagedResponse(List<T> data, int pageNumber, int pageSize, int totalRecords)
+        public PagedResponse(IReadOnlyList<T> data, PaginationMetadata pagination, bool isSuccess, string message, HttpStatusCode statusCode = HttpStatusCode.OK)
+            : base(isSuccess, data, message, statusCode)
         {
-            this.PageNumber = pageNumber;
-            this.PageSize = pageSize;
-            this.Data = data;
-            this.Message = "Veri başarıyla yüklendi";
-            this.Success = true;
-            this.StatusCode = 200;
-            this.TotalRecords = totalRecords;
-            this.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            Pagination = pagination;
         }
 
-        /// <summary>
-        /// Başarılı bir sayfalanmış yanıt oluşturur
-        /// </summary>
-        public static PagedResponse<T> CreateSuccess(List<T> data, int pageNumber, int pageSize, int totalRecords, string message = "Veri başarıyla yüklendi")
+        public static PagedResponse<T> Success(IReadOnlyList<T> data, PaginationMetadata pagination, string message = null)
         {
-            var response = new PagedResponse<T>(data, pageNumber, pageSize, totalRecords)
-            {
-                Message = message
-            };
-            
-            return response;
+            return new PagedResponse<T>(data, pagination, true, message ?? "İşlem başarıyla tamamlandı.");
         }
 
-        /// <summary>
-        /// Başarısız bir sayfalanmış yanıt oluşturur
-        /// </summary>
-        public static PagedResponse<T> CreateFail(string message, int statusCode, int errorCode, List<string> errors = null)
+        public static PagedResponse<T> Success(PagedList<T> pagedList, string message = null)
         {
-            var response = new PagedResponse<T>(new List<T>(), 0, 0, 0)
+            var pagination = new PaginationMetadata
             {
-                Success = false,
-                Message = message,
-                StatusCode = statusCode,
-                ErrorCode = errorCode,
-                Errors = errors ?? new List<string>()
+                CurrentPage = pagedList.CurrentPage,
+                PageSize = pagedList.PageSize,
+                TotalCount = pagedList.TotalCount,
+                TotalPages = pagedList.TotalPages,
+                HasNext = pagedList.HasNext,
+                HasPrevious = pagedList.HasPrevious
             };
-            
-            return response;
+
+            return Success(pagedList.ToList(), pagination, message);
+        }
+
+        public static PagedResponse<T> Failure(string message, HttpStatusCode statusCode = HttpStatusCode.BadRequest)
+        {
+            return new PagedResponse<T>(null, null, false, message, statusCode);
         }
     }
 } 

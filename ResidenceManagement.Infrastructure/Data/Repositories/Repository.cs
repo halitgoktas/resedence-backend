@@ -97,6 +97,11 @@ namespace ResidenceManagement.Infrastructure.Data.Repositories
             return await _dbContext.Set<T>().Where(predicate).ToListAsync();
         }
 
+        public IQueryable<T> GetQueryable()
+        {
+            return _dbContext.Set<T>();
+        }
+
         public async Task<T> AddAsync(T entity)
         {
             await _dbContext.Set<T>().AddAsync(entity);
