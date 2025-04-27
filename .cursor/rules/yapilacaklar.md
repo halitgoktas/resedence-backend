@@ -9,19 +9,19 @@
   - [x] Kullanıcı giriş/çıkış işlemleri
   - [ ] Şifre sıfırlama mekanizması
 
-- [ ] **API Yapılandırma**
-  - [ ] CORS politikalarının ayarlanması
-  - [ ] API versiyonlama (URL path, header veya query string bazlı)
-  - [ ] Endpoint URL yapısının standardizasyonu
-  - [ ] HTTP metot kullanım standartları (GET, POST, PUT, DELETE)
-  - [ ] API Rate limiting
+- [x] **API Yapılandırma**
+  - [x] CORS politikalarının ayarlanması
+  - [x] API versiyonlama (URL path, header veya query string bazlı)
+  - [x] Endpoint URL yapısının standardizasyonu
+  - [x] HTTP metot kullanım standartları (GET, POST, PUT, DELETE)
+  - [x] API Rate limiting
 
 - [ ] **Hata Yönetimi**
-  - [ ] Global exception handler middleware
-  - [ ] İş kuralları için custom exception sınıfları
-  - [ ] Hata kod standardı ve hata mesajları dictionary'si
-  - [ ] HTTP status code standartlarının belirlenmesi
-  - [ ] Validasyon hatalarının standardizasyonu
+  - [x] Global exception handler middleware
+  - [x] İş kuralları için custom exception sınıfları
+  - [x] Hata kod standardı ve hata mesajları dictionary'si
+  - [x] HTTP status code standartlarının belirlenmesi
+  - [x] Validasyon hatalarının standardizasyonu
 
 - [ ] **Loglama**
   - [ ] Serilog kütüphanesinin entegrasyonu
@@ -149,11 +149,11 @@
 
 ## 5. Güvenlik
 
-- [ ] **Input Validasyon**
-  - [ ] FluentValidation entegrasyonu
-  - [ ] Model validasyon kuralları
-  - [ ] API request validasyonu
-  - [ ] Cross-field validasyon
+- [x] **Input Validasyon**
+  - [x] FluentValidation entegrasyonu
+  - [x] Model validasyon kuralları
+  - [x] API request validasyonu
+  - [x] Cross-field validasyon
 
 - [ ] **Data Güvenliği**
   - [ ] Hassas verilerin şifrelenmesi

@@ -496,3 +496,75 @@ git push -u origin master
    // Bir string'i Guid'e çevirme:
    var guidFromString = Guid.Parse("12345678-1234-1234-1234-123456789012");
    ```
+
+## [Hata Mesajı] C# dilinde aynı isimde property ve static metot bulunması
+Çözüm: C# dilinde, aynı sınıf içerisinde bir property ve metot aynı isme sahip olamaz. Bu durum derleme hatası verir.
+
+1. Hatayı tespit edin:
+   ```csharp
+   // Örneğin:
+   public class ApiResponse
+   {
+       public bool Success { get; set; } // Property
+       
+       public static ApiResponse Success(string message) // Metot - isim çakışması var!
+       {
+           // ...
+       }
+   }
+   ```
+
+2. Çözüm yolu:
+   - Metot ismini değiştirin:
+   ```csharp
+   public class ApiResponse
+   {
+       public bool Success { get; set; } // Property aynen kalır
+       
+       public static ApiResponse CreateSuccess(string message) // Metot ismi değiştirildi
+       {
+           // ...
+       }
+   }
+   ```
+
+   - Benzer şekilde diğer çakışan metodları da (örn: Fail -> CreateFail) yeniden adlandırın
+   - Hem ana sınıfta hem de generic türevlerinde (ApiResponse<T> gibi) bu değişiklikleri yapın
+
+3. Metotları çağıran yerleri de yeni isimlerle güncelleyin:
+   ```csharp
+   // Eski kullanım
+   return ApiResponse.Success("İşlem başarılı");
+   
+   // Yeni kullanım
+   return ApiResponse.CreateSuccess("İşlem başarılı");
+   ```
+
+## [Hata Mesajı] ApiResponse sınıfında Success property ve MarkAsSuccess/CreateSuccess metodları isim çakışması
+   
+   **Çözüm:** 
+   
+   ApiResponse sınıfında `Success` adlı bir property ve aynı zamanda static `CreateSuccess` ve entity sınıflarında `MarkAsSuccess` gibi metodlar bulunması, özellikle IntelliSense veya kod tamamlama kullanırken karışıklığa sebep olabilir.
+   
+   Hata durumu:
+   ```csharp
+   // ApiResponse nesnesinin Success özelliğine erişmek istediğimizde
+   var isSuccess = response.Success; // Property erişimi doğru
+   
+   // Ancak şu şekilde karışıklık olabilir
+   var isSuccess = SomeEntity.Success; // Burada Success bir metod mu yoksa property mi?
+   ```
+   
+   Çözüm:
+   1. CreateSuccess ve MarkAsSuccess metodlarını daha açıklayıcı isimlerle değiştirmek:
+      - `CreateSuccess` yerine `CreateSuccessResponse`
+      - `MarkAsSuccess` yerine `MarkAsSuccessful` veya `SetSuccessStatus`
+   
+   2. Kodda böyle çakışmalar varsa static metodları çağırırken tam niteleme kullanın:
+      ```csharp
+      var response = ApiResponse.CreateSuccess("İşlem tamamlandı"); // Tam niteleme ile
+      ```
+   
+   3. İki farklı kavram için çok benzer isimler kullanmamaya özen gösterin:
+      - Durumlar için: IsSuccessful, HasCompleted gibi boolean properties
+      - Eylemler için: MarkCompleted, SetSuccess gibi metodlar
