@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezidans ve Site Yönetim Sistemi</title>
+    <style>
+        :root {
+            --primary-color: #1976d2;
+            --secondary-color: #f50057;
+            --light-gray: #f5f5f5;
+            --dark-gray: #333;
+            --text-color: #212121;
+            --border-color: #e0e0e0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            color: var(--text-color);
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--secondary-color);
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .feature-card {
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .feature-card h3 {
+            margin-top: 0;
+        }
+        
+        .architecture-section {
+            background-color: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .tech-badge {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .layer-diagram {
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .layer {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .layer:last-child {
+            border-bottom: none;
+        }
+        
+        .layer-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .layer-1 {
+            background-color: #bbdefb;
+        }
+        
+        .layer-2 {
+            background-color: #90caf9;
+        }
+        
+        .layer-3 {
+            background-color: #64b5f6;
+        }
+        
+        .layer-4 {
+            background-color: #42a5f5;
+        }
+        
+        .layer-5 {
+            background-color: #2196f3;
+            color: white;
+        }
+        
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--dark-gray);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Rezidans ve Site Yönetim Sistemi</h1>
+        <p>Modern rezidans ve site yönetimi ihtiyaçları için kapsamlı bir dijital çözüm</p>
+    </header>
+
+    <section>
+        <h2>Proje Genel Bakış</h2>
+        <p>Rezidans ve Site Yönetim Sistemi, modern rezidans ve site yönetiminin tüm ihtiyaçlarını karşılayan, kapsamlı bir yönetim platformudur. Bu sistem, multi-tenant (çok kiracılı) bir mimari kullanarak birden fazla firma ve şube için hizmet vermektedir. Temel amacı, site yöneticileri, sakinler ve yönetim kurulları için etkili, güvenli ve kullanıcı dostu bir yönetim çözümü sunmaktır.</p>
+    </section>
+
+    <section>
+        <h2>Temel Özellikler</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>Site ve Bina Yönetimi</h3>
+                <ul>
+                    <li>Site bilgileri ve genel özelliklerin yönetimi</li>
+                    <li>Bina bilgileri, kat ve daire takibi</li>
+                    <li>Daire numarası, kat bilgisi, alan ve oda sayısı yönetimi</li>
+                    <li>Demirbaş yönetimi</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Kullanıcı ve Yetkilendirme</h3>
+                <ul>
+                    <li>Rol bazlı yetkilendirme sistemi</li>
+                    <li>Sakinler, yöneticiler ve personel için kullanıcı hesapları</li>
+                    <li>Multi-tenant yapı ile firma ve şube yönetimi</li>
+                    <li>JWT tabanlı güvenli kimlik doğrulama</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Finansal Yönetim</h3>
+                <ul>
+                    <li>Gider kategorileri ve takibi</li>
+                    <li>Daire başına fatura oluşturma ve takibi</li>
+                    <li>Aidat yönetimi ve ödeme takibi</li>
+                    <li>Gelir-gider raporları</li>
+                    <li>Çoklu para birimi desteği</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Sakin Yönetimi</h3>
+                <ul>
+                    <li>Sakin bilgilerinin yönetimi</li>
+                    <li>KBS (Kimlik Bildirim Sistemi) entegrasyonu</li>
+                    <li>Sakin geçmişi ve istatistikleri</li>
+                    <li>Sakin dökümantasyon yönetimi</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Rezervasyon Modülü</h3>
+                <ul>
+                    <li>Ortak alan rezervasyonları</li>
+                    <li>Rezervasyon takvimi ve yönetimi</li>
+                    <li>Doluluk durumu takibi</li>
+                    <li>Ücretli ve ücretsiz rezervasyon seçenekleri</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Bakım ve Onarım</h3>
+                <ul>
+                    <li>Bakım talepleri ve yönetimi</li>
+                    <li>İş emirleri ve takibi</li>
+                    <li>Bakım periyotları ve hatırlatıcılar</li>
+                    <li>Bakım geçmişi ve raporlama</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Bildirim Sistemi</h3>
+                <ul>
+                    <li>E-posta bildirimleri</li>
+                    <li>SMS bildirimleri</li>
+                    <li>Uygulama içi bildirimler</li>
+                    <li>Özelleştirilebilir bildirim şablonları</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Raporlama ve Analiz</h3>
+                <ul>
+                    <li>Finansal raporlar</li>
+                    <li>Doluluk ve sakin raporları</li>
+                    <li>Özelleştirilebilir raporlama araçları</li>
+                    <li>Dashboard ve analitik görünümler</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Çoklu Dil Desteği</h3>
+                <ul>
+                    <li>Türkçe, İngilizce, Almanca</li>
+                    <li>Rusça, Arapça, Farsça</li>
+                    <li>Kullanıcı ve firma bazlı dil tercihleri</li>
+                    <li>Yerelleştirme desteği</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="architecture-section">
+        <h2>Teknoloji Yığını</h2>
+        
+        <h3>Backend Teknolojileri</h3>
+        <div class="tech-list">
+            <span class="tech-badge">.NET 8 Web API</span>
+            <span class="tech-badge">C#</span>
+            <span class="tech-badge">Entity Framework Core</span>
+            <span class="tech-badge">SQL Server</span>
+            <span class="tech-badge">JWT Authentication</span>
+            <span class="tech-badge">Swagger/OpenAPI</span>
+            <span class="tech-badge">AutoMapper</span>
+            <span class="tech-badge">FluentValidation</span>
+            <span class="tech-badge">Serilog</span>
+        </div>
+        
+        <h3>Frontend Teknolojileri</h3>
+        <div class="tech-list">
+            <span class="tech-badge">React.js</span>
+            <span class="tech-badge">TypeScript</span>
+            <span class="tech-badge">Material UI</span>
+            <span class="tech-badge">Context API</span>
+            <span class="tech-badge">Axios</span>
+            <span class="tech-badge">React Router</span>
+            <span class="tech-badge">React Hook Form</span>
+            <span class="tech-badge">i18next</span>
+        </div>
+        
+        <h3>Mobil Uygulama</h3>
+        <div class="tech-list">
+            <span class="tech-badge">React Native</span>
+            <span class="tech-badge">TypeScript</span>
+            <span class="tech-badge">React Navigation</span>
+            <span class="tech-badge">React Native Paper</span>
+        </div>
+    </section>
+
+    <section>
+        <h2>Mimari Yapı</h2>
+        <p>Proje, Clean Architecture prensiplerini temel alarak N-katmanlı bir mimari kullanmaktadır:</p>
+        
+        <div class="layer-diagram">
+            <div class="layer layer-1">
+                <div class="layer-title">API Katmanı (ResidenceManagement.API)</div>
+                <div>API kontrollerleri, middleware'ler, API filtreleri, API yapılandırmaları</div>
+            </div>
+            
+            <div class="layer layer-2">
+                <div class="layer-title">Uygulama Katmanı (ResidenceManagement.Application)</div>
+                <div>İş mantığı servisleri, DTOs, Validators, Command/Query handlers</div>
+            </div>
+            
+            <div class="layer layer-3">
+                <div class="layer-title">Domain Katmanı (ResidenceManagement.Core)</div>
+                <div>Domain modelleri, enums, interfaces, iş kuralları, sabitler</div>
+            </div>
+            
+            <div class="layer layer-4">
+                <div class="layer-title">Altyapı Katmanı (ResidenceManagement.Infrastructure)</div>
+                <div>Harici servisler, güvenlik, e-posta, SMS, dosya depolama, entegrasyonlar</div>
+            </div>
+            
+            <div class="layer layer-5">
+                <div class="layer-title">Veri Erişim Katmanı (ResidenceManagement.Data)</div>
+                <div>DbContext, Repository implementasyonları, Entity konfigürasyonları, Migrations</div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Modüller ve Sayfalar</h2>
+        
+        <h3>Dashboard (Ana Sayfa)</h3>
+        <ul>
+            <li>Genel durum özeti</li>
+            <li>Kritik bilgiler</li>
+            <li>Grafikler ve istatistikler</li>
+        </ul>
+        
+        <h3>Tanımlar Modülü</h3>
+        <ul>
+            <li>Firma tanımları</li>
+            <li>Şube tanımları</li>
+            <li>Kullanıcı tanımları</li>
+            <li>Ayarlar</li>
+            <li>Daire tanımları</li>
+            <li>Aktivite alanları</li>
+            <li>Hizmet tanımları</li>
+            <li>Personel tanımları</li>
+        </ul>
+        
+        <h3>Daire Yönetimi</h3>
+        <ul>
+            <li>Daire listesi</li>
+            <li>Daire detayı</li>
+            <li>Daire durumu takibi</li>
+            <li>Demirbaş yönetimi</li>
+        </ul>
+        
+        <h3>Sakin Yönetimi</h3>
+        <ul>
+            <li>Sakin listesi</li>
+            <li>Sakin ekleme/düzenleme</li>
+            <li>Sakin geçmişi</li>
+            <li>KBS işlemleri</li>
+        </ul>
+        
+        <h3>Rezervasyon Modülü</h3>
+        <ul>
+            <li>Rezervasyon listesi</li>
+            <li>Rezervasyon oluşturma</li>
+            <li>Takvim görünümü</li>
+            <li>Doluluk durumu</li>
+        </ul>
+        
+        <h3>Finansal Yönetim</h3>
+        <ul>
+            <li>Aidat yönetimi</li>
+            <li>Ödeme takibi</li>
+            <li>Gelir-gider takibi</li>
+            <li>Faturalar</li>
+        </ul>
+        
+        <h3>Raporlama Modülü</h3>
+        <ul>
+            <li>Finansal raporlar</li>
+            <li>Doluluk raporları</li>
+            <li>Ödeme raporları</li>
+            <li>Özelleştirilebilir raporlar</li>
+        </ul>
+        
+        <h3>Yönetim Modülü</h3>
+        <ul>
+            <li>Kullanıcı yönetimi</li>
+            <li>Yetkilendirme</li>
+            <li>Sistem ayarları</li>
+            <li>Log takibi</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Multi-tenant Yapı</h2>
+        <p>Sistem, çok kiracılı (multi-tenant) mimariye sahiptir. Bu yapı sayesinde:</p>
+        <ul>
+            <li>Her kayıt, FirmaID ve SubeID alanlarını içerir</li>
+            <li>Farklı firmalar ve şubeler kendi verilerini ayrı olarak yönetebilirler</li>
+            <li>Tüm sorgular ve kayıtlar otomatik olarak tenant bazlı filtrelenir</li>
+            <li>Tenant doğrulama ve güvenlik katmanı ile veriler korunur</li>
+            <li>Firma başına özelleştirilebilir ayarlar sunulur</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Çoklu Dil ve Para Birimi Desteği</h2>
+        <p>Sistem, uluslararası müşteriler için kapsamlı yerelleştirme desteği sunar:</p>
+        <ul>
+            <li>Türkçe, İngilizce, Almanca, Rusça, Arapça ve Farsça dil desteği</li>
+            <li>TL, EUR, USD, GBP para birimi desteği</li>
+            <li>Otomatik döviz kuru güncelleme ve çevirme altyapısı</li>
+            <li>Kullanıcı ve firma bazlı dil ve para birimi tercihleri</li>
+            <li>Yerelleştirilmiş tarih, saat ve numara formatları</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Güvenlik Özellikleri</h2>
+        <ul>
+            <li>JWT tabanlı kimlik doğrulama</li>
+            <li>Rol tabanlı yetkilendirme</li>
+            <li>İki faktörlü kimlik doğrulama desteği</li>
+            <li>SQL injection ve XSS koruması</li>
+            <li>HTTPS zorunluluğu</li>
+            <li>Hassas verilerin şifrelenmesi</li>
+            <li>IP bazlı erişim kontrolü</li>
+            <li>Kullanıcı aktivite logları</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Entegrasyonlar</h2>
+        <ul>
+            <li>KBS (Kimlik Bildirim Sistemi) entegrasyonu</li>
+            <li>SMS servisleri</li>
+            <li>E-posta servisleri</li>
+            <li>TCMB döviz kurları</li>
+            <li>Ödeme sistemleri</li>
+            <li>E-Fatura ve E-Arşiv</li>
+            <li>Banka entegrasyonları</li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>Rezidans ve Site Yönetim Sistemi &copy; 2024 | Tüm Hakları Saklıdır.</p>
+    </footer>
+</body>
+</html> 
