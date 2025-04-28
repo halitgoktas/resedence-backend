@@ -8,6 +8,11 @@ using ResidenceManagement.Core.DTOs;
 using ResidenceManagement.Core.DTOs.Maintenance;
 using ResidenceManagement.Core.Common;
 using ResidenceManagement.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Threading.Tasks;
+using ResidenceManagement.API.Filters;
 
 // Alias tanımlamaları
 using MaintenanceDTO = ResidenceManagement.Core.DTOs.Maintenance.MaintenanceScheduleDTO;
@@ -25,21 +30,214 @@ using MaintenanceDocumentCreateDTO = ResidenceManagement.Core.DTOs.Maintenance.M
 namespace ResidenceManagement.API.Controllers
 {
     // Bakım takvimi işlemleri için controller
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
-    [Route("api/[controller]")]
     [Authorize]
     public class MaintenanceScheduleController : ControllerBase
     {
-        private readonly IMaintenanceScheduleService _maintenanceService;
+        private readonly IMaintenanceScheduleService _maintenanceScheduleService;
         private readonly ILogger<MaintenanceScheduleController> _logger;
 
         // Constructor
         public MaintenanceScheduleController(
-            IMaintenanceScheduleService maintenanceService,
+            IMaintenanceScheduleService maintenanceScheduleService,
             ILogger<MaintenanceScheduleController> logger)
         {
-            _maintenanceService = maintenanceService;
+            _maintenanceScheduleService = maintenanceScheduleService;
             _logger = logger;
+        }
+
+        /// <summary>
+        /// Tüm bakım çizelgelerini getirir
+        /// </summary>
+        /// <param name="firmaId">Firma ID</param>
+        /// <param name="subeId">Şube ID</param>
+        /// <returns>Bakım çizelgeleri listesi</returns>
+        [HttpGet]
+        public async Task<IActionResult> GetAll(int firmaId, int subeId)
+        {
+            var schedules = await _maintenanceScheduleService.GetMaintenanceSchedulesAsync();
+            return Ok(schedules);
+        }
+
+        /// <summary>
+        /// ID'ye göre bakım çizelgesi getirir
+        /// </summary>
+        /// <param name="id">Bakım çizelgesi ID'si</param>
+        /// <param name="firmaId">Firma ID</param>
+        /// <param name="subeId">Şube ID</param>
+        /// <returns>Bakım çizelgesi</returns>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id, int firmaId, int subeId)
+        {
+            var schedule = await _maintenanceScheduleService.GetMaintenanceScheduleByIdAsync(id);
+            if (schedule == null)
+                return NotFound();
+
+            return Ok(schedule);
+        }
+
+        /// <summary>
+        /// Yeni bakım çizelgesi ekler
+        /// </summary>
+        /// <param name="maintenanceSchedule">Bakım çizelgesi bilgileri</param>
+        /// <returns>Eklenen bakım çizelgesinin ID'si</returns>
+        [HttpPost]
+        public async Task<IActionResult> Add([FromBody] MaintenanceDTO maintenanceSchedule)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var createDto = new MaintenanceCreateDTO
+                {
+                    Title = maintenanceSchedule.Title,
+                    Description = maintenanceSchedule.Description,
+                };
+                
+                var id = await _maintenanceScheduleService.CreateMaintenanceScheduleAsync(createDto);
+                return CreatedAtAction(nameof(GetById), new { id, firmaId = 0, subeId = 0 }, id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Bakım çizelgesini günceller
+        /// </summary>
+        /// <param name="id">Bakım çizelgesi ID'si</param>
+        /// <param name="maintenanceSchedule">Güncellenecek bakım çizelgesi bilgileri</param>
+        /// <returns>İşlem sonucu</returns>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] MaintenanceDTO maintenanceSchedule)
+        {
+            if (id != maintenanceSchedule.Id)
+                return BadRequest("URL'deki ID ile gönderilen ID eşleşmiyor");
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var updateDto = new MaintenanceUpdateDTO
+                {
+                    Id = maintenanceSchedule.Id,
+                    Title = maintenanceSchedule.Title,
+                    Description = maintenanceSchedule.Description,
+                };
+                
+                var result = await _maintenanceScheduleService.UpdateMaintenanceScheduleAsync(updateDto);
+                if (!result)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Bakım çizelgesini siler
+        /// </summary>
+        /// <param name="id">Silinecek bakım çizelgesi ID'si</param>
+        /// <returns>İşlem sonucu</returns>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var result = await _maintenanceScheduleService.DeleteMaintenanceScheduleAsync(id);
+                if (!result)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Bakım çizelgesini tamamlar
+        /// </summary>
+        /// <param name="id">Bakım çizelgesi ID'si</param>
+        /// <param name="completionDate">Tamamlanma tarihi</param>
+        /// <param name="notes">Notlar</param>
+        /// <param name="actualCost">Gerçek maliyet</param>
+        /// <returns>İşlem sonucu</returns>
+        [HttpPut("{id}/complete")]
+        public async Task<IActionResult> Complete(int id, DateTime completionDate, string notes, decimal? actualCost)
+        {
+            try
+            {
+                var result = await _maintenanceScheduleService.CompleteMaintenanceAsync(id, notes, actualCost, null);
+                if (!result)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Bakım çizelgesini iptal eder
+        /// </summary>
+        /// <param name="id">Bakım çizelgesi ID'si</param>
+        /// <param name="cancelReason">İptal sebebi</param>
+        /// <returns>İşlem sonucu</returns>
+        [HttpPut("{id}/cancel")]
+        public async Task<IActionResult> Cancel(int id, string cancelReason)
+        {
+            try
+            {
+                var result = await _maintenanceScheduleService.CancelMaintenanceAsync(id, cancelReason);
+                if (!result)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Bakım çizelgesinin ilerleme durumunu günceller
+        /// </summary>
+        /// <param name="id">Bakım çizelgesi ID'si</param>
+        /// <param name="completionPercentage">Tamamlanma yüzdesi</param>
+        /// <param name="notes">Notlar</param>
+        /// <returns>İşlem sonucu</returns>
+        [HttpPut("{id}/progress")]
+        public async Task<IActionResult> UpdateProgress(int id, int completionPercentage, string notes)
+        {
+            try
+            {
+                var result = await _maintenanceScheduleService.UpdateMaintenanceStatusAsync(id, $"Progress: {completionPercentage}%", notes);
+                if (!result)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // Bakım takvimini listeleme
@@ -55,7 +253,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var schedules = await _maintenanceService.GetMaintenanceSchedulesAsync(
+                var schedules = await _maintenanceScheduleService.GetMaintenanceSchedulesAsync(
                     startDate, endDate, residenceId, blockId, maintenanceType, status);
                 return Ok(schedules);
             }
@@ -73,7 +271,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var schedule = await _maintenanceService.GetMaintenanceScheduleByIdAsync(id);
+                var schedule = await _maintenanceScheduleService.GetMaintenanceScheduleByIdAsync(id);
                 
                 if (schedule == null)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
@@ -98,10 +296,10 @@ namespace ResidenceManagement.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 
-                var scheduleId = await _maintenanceService.CreateMaintenanceScheduleAsync(model);
-                var createdSchedule = await _maintenanceService.GetMaintenanceScheduleByIdAsync(scheduleId);
+                var scheduleId = await _maintenanceScheduleService.CreateMaintenanceScheduleAsync(model);
+                var createdSchedule = await _maintenanceScheduleService.GetMaintenanceScheduleByIdAsync(scheduleId);
                 
-                return CreatedAtAction(nameof(GetMaintenanceScheduleById), new { id = scheduleId }, createdSchedule);
+                return CreatedAtAction(nameof(GetById), new { id = scheduleId, firmaId = 0, subeId = 0 }, scheduleId);
             }
             catch (Exception ex)
             {
@@ -124,12 +322,12 @@ namespace ResidenceManagement.API.Controllers
                 if (id != model.Id)
                     return BadRequest(new { message = "ID değerleri uyuşmuyor" });
                 
-                var success = await _maintenanceService.UpdateMaintenanceScheduleAsync(model);
+                var result = await _maintenanceScheduleService.UpdateMaintenanceScheduleAsync(model);
                 
-                if (!success)
+                if (!result)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
-                var updatedSchedule = await _maintenanceService.GetMaintenanceScheduleByIdAsync(id);
+                var updatedSchedule = await _maintenanceScheduleService.GetMaintenanceScheduleByIdAsync(id);
                 return Ok(updatedSchedule);
             }
             catch (Exception ex)
@@ -146,9 +344,9 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var success = await _maintenanceService.DeleteMaintenanceScheduleAsync(id);
+                var result = await _maintenanceScheduleService.DeleteMaintenanceScheduleAsync(id);
                 
-                if (!success)
+                if (!result)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
                 return NoContent();
@@ -160,7 +358,7 @@ namespace ResidenceManagement.API.Controllers
             }
         }
 
-        // Bakım durumu güncelleme
+        // Bakım durumu güncelleme isteği
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Admin,Manager,TechnicalStaff")]
         public async Task<ActionResult> UpdateMaintenanceStatus(
@@ -171,9 +369,9 @@ namespace ResidenceManagement.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 
-                var success = await _maintenanceService.UpdateMaintenanceStatusAsync(id, request.Status, request.Notes);
+                var result = await _maintenanceScheduleService.UpdateMaintenanceStatusAsync(id, request.Status, request.Notes);
                 
-                if (!success)
+                if (!result)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
                 return Ok(new { message = "Bakım durumu başarıyla güncellendi" });
@@ -196,10 +394,10 @@ namespace ResidenceManagement.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 
-                var success = await _maintenanceService.AssignMaintenanceAsync(
+                var result = await _maintenanceScheduleService.AssignMaintenanceAsync(
                     id, request.AssignedToUserId, request.AssignedToUserName, request.Notes);
                 
-                if (!success)
+                if (!result)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
                 return Ok(new { message = "Bakım görevi başarıyla atandı" });
@@ -222,10 +420,10 @@ namespace ResidenceManagement.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 
-                var success = await _maintenanceService.CompleteMaintenanceAsync(
-                    id, request.CompletionNotes, request.ActualCost, request.ActualDurationMinutes);
+                var result = await _maintenanceScheduleService.CompleteMaintenanceAsync(
+                    id, request.CompletionNotes, request.ActualCost, null);
                 
-                if (!success)
+                if (!result)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
                 return Ok(new { message = "Bakım başarıyla tamamlandı" });
@@ -248,9 +446,9 @@ namespace ResidenceManagement.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 
-                var success = await _maintenanceService.CancelMaintenanceAsync(id, request.CancellationReason);
+                var result = await _maintenanceScheduleService.CancelMaintenanceAsync(id, request.CancellationReason);
                 
-                if (!success)
+                if (!result)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
                 return Ok(new { message = "Bakım başarıyla iptal edildi" });
@@ -273,17 +471,17 @@ namespace ResidenceManagement.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 
-                var response = await _maintenanceService.UpdateMaintenanceChecklistAsync(id, model);
+                var result = await _maintenanceScheduleService.UpdateMaintenanceChecklistAsync(id, model);
                 
-                if (!response.IsSuccess)
-                    return StatusCode((int)response.StatusCode, response);
+                if (result == null)
+                    return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
-                return Ok(response);
+                return Ok(new { message = "Bakım kontrol listesi başarıyla güncellendi" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Kontrol listesi güncellenirken hata oluştu. ID: {Id}", id);
-                return StatusCode(500, new { message = "Kontrol listesi güncellenirken bir hata oluştu", error = ex.Message });
+                _logger.LogError(ex, "Bakım kontrol listesi güncellenirken hata oluştu. ID: {Id}", id);
+                return StatusCode(500, new { message = "Bakım kontrol listesi güncellenirken bir hata oluştu", error = ex.Message });
             }
         }
 
@@ -298,12 +496,12 @@ namespace ResidenceManagement.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 
-                var response = await _maintenanceService.AddMaintenanceDocumentAsync(id, model);
+                var result = await _maintenanceScheduleService.AddMaintenanceDocumentAsync(id, model);
                 
-                if (!response.IsSuccess)
-                    return StatusCode((int)response.StatusCode, response);
+                if (result == null)
+                    return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
                 
-                return Ok(response);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -319,7 +517,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var logs = await _maintenanceService.GetMaintenanceLogsAsync(id);
+                var logs = await _maintenanceScheduleService.GetMaintenanceLogsAsync(id);
                 
                 if (logs == null)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı" });
@@ -340,7 +538,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var schedules = await _maintenanceService.GetMaintenanceSchedulesByEquipmentAsync(equipmentId);
+                var schedules = await _maintenanceScheduleService.GetMaintenanceSchedulesByEquipmentAsync(equipmentId);
                 return Ok(schedules);
             }
             catch (Exception ex)
@@ -357,7 +555,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var schedules = await _maintenanceService.GetMaintenanceSchedulesByApartmentAsync(apartmentId);
+                var schedules = await _maintenanceScheduleService.GetMaintenanceSchedulesByApartmentAsync(apartmentId);
                 return Ok(schedules);
             }
             catch (Exception ex)
@@ -374,7 +572,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var schedules = await _maintenanceService.GetMaintenanceSchedulesByAssignedUserAsync(userId);
+                var schedules = await _maintenanceScheduleService.GetMaintenanceSchedulesByUserAsync(userId);
                 return Ok(schedules);
             }
             catch (Exception ex)
@@ -391,7 +589,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var newScheduleId = await _maintenanceService.CreateRecurrenceInstanceAsync(id);
+                var newScheduleId = await _maintenanceScheduleService.CreateRecurrenceInstanceAsync(id);
                 
                 if (newScheduleId <= 0)
                     return NotFound(new { message = $"ID: {id} numaralı bakım planı bulunamadı veya tekrarlanabilir değil" });
@@ -419,7 +617,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var report = await _maintenanceService.GetUpcomingMaintenanceReportAsync(residenceId, days);
+                var report = await _maintenanceScheduleService.GetUpcomingMaintenanceReportAsync(residenceId, days);
                 return Ok(report);
             }
             catch (Exception ex)
@@ -440,7 +638,7 @@ namespace ResidenceManagement.API.Controllers
         {
             try
             {
-                var report = await _maintenanceService.GetMaintenanceCostReportAsync(startDate, endDate, residenceId);
+                var report = await _maintenanceScheduleService.GetMaintenanceCostReportAsync(startDate, endDate, residenceId);
                 return Ok(report);
             }
             catch (Exception ex)
@@ -471,9 +669,9 @@ namespace ResidenceManagement.API.Controllers
         // Tamamlama isteği sınıfı
         public class CompletionRequest
         {
+            public DateTime CompletionDate { get; set; }
             public string CompletionNotes { get; set; }
             public decimal? ActualCost { get; set; }
-            public int? ActualDurationMinutes { get; set; }
         }
 
         // İptal isteği sınıfı
