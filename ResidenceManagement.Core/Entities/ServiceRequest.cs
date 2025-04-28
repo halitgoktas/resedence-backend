@@ -11,7 +11,7 @@ namespace ResidenceManagement.Core.Entities
     /// <summary>
     /// Hizmet taleplerini temsil eden entity sınıfı
     /// </summary>
-    public class ServiceRequest : BaseEntity
+    public class ServiceRequest : ResidenceManagement.Core.Entities.Base.BaseEntity
     {
         /// <summary>
         /// Talep numarası
@@ -145,7 +145,7 @@ namespace ResidenceManagement.Core.Entities
     /// <summary>
     /// Hizmet talebi notlarını temsil eden entity
     /// </summary>
-    public class ServiceNote : BaseEntity
+    public class ServiceNote : ResidenceManagement.Core.Entities.Base.BaseEntity
     {
         /// <summary>
         /// Hizmet talebi ID
@@ -182,7 +182,7 @@ namespace ResidenceManagement.Core.Entities
     /// <summary>
     /// Hizmet talebi eklerini temsil eden entity
     /// </summary>
-    public class ServiceAttachment : BaseEntity
+    public class ServiceAttachment : ResidenceManagement.Core.Entities.Base.BaseEntity
     {
         /// <summary>
         /// Hizmet talebi ID
@@ -229,7 +229,7 @@ namespace ResidenceManagement.Core.Entities
     /// <summary>
     /// Hizmet talebi durum geçmişini temsil eden entity
     /// </summary>
-    public class ServiceHistory : BaseEntity
+    public class ServiceHistory : ResidenceManagement.Core.Entities.Base.BaseEntity
     {
         /// <summary>
         /// Hizmet talebi ID

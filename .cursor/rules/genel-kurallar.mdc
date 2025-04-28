@@ -467,5 +467,36 @@ Bu standartlar, projenin tüm yaşam döngüsü boyunca güncel tutulacak ve ger
   - Repository metotlarının doğru çağrıldığından emin olunmalı
   - Tip dönüşümlerinin güvenli yapıldığından emin olunmalı
 
+- Her yeni entity eklemeden önce:
+  1. Projeyi "entity adı" için tara
+  2. Benzer isimleri kontrol et (Türkçe/İngilizce)
+  3. Mevcut entity varsa, güncelleme yeterli mi değerlendir
+  4. Yeni entity kesin gerekli mi teyit et
+
+Bu standartlar, projenin tüm yaşam döngüsü boyunca güncel tutulacak ve gerektiğinde genişletilecektir.
+
+## 10. Entity Yapısı İçin README Güncellenmesi
+
+- **Entity Yapısı İçin README Güncellenmesi**:
+  - Entity'nin nerede kullanıldığı ve amacı hakkında bilgi verilmeli
+  - Entity'nin özellikleri ve kullanımı için açıklamalar yapılmalı
+  - Entity'nin oluşturulma/güncellenme prosedürü tanımlanmalı
+
+## 11. Naming Convention Kuralları
+
+- **Entity İsimlendirme Kuralları**:
+  - Entity isimleri PascalCase ile yazılmalı
+  - Entity isimleri için uygun önekler kullanılmalı (örn. Kullanici, Oda, Firma)
+  - Entity isimleri için Türkçe karşılıkları belirlenmeli
+
+## 12. Entity Oluşturma/Güncelleme Prosedürü
+
+- **Entity Oluşturma/Güncelleme Prosedürü**:
+  - Yeni entity eklendikten sonra, ilgili alandaki teknik borçlar temizlenmeli
+  - Yeni entity'nin oluşturulması için gerekli tüm adımlar ve kontroller yapılmalı
+  - Yeni entity'nin oluşturulmasından sonra, tüm testlerin başarıyla çalıştığından emin olunmalı
+
+Bu standartlar, projenin tüm yaşam döngüsü boyunca güncel tutulacak ve gerektiğinde genişletilecektir.
+
 
 

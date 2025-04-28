@@ -8,7 +8,7 @@ namespace ResidenceManagement.Core.Entities.Identity
     /// <summary>
     /// Kullanıcı-Rol ilişkisini tanımlayan sınıf
     /// </summary>
-    public class UserRole : BaseEntity, ITenant
+    public class UserRole : BaseEntity, ResidenceManagement.Core.Common.ITenant
     {
         /// <summary>
         /// Kullanıcı ID

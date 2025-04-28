@@ -1,16 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ResidenceManagement.Core.Models.KBS;
+using ResidenceManagement.Core.Entities.Kbs;
 using ResidenceManagement.Core.DTOs;
 
 namespace ResidenceManagement.Core.Services
 {
-    // KBS (Kimlik Bildirme Sistemi) entegrasyonu için servis arayüzü
-    // Bu arayüz, KBS ile iletişim kurarak konaklama bildirimlerini göndermek,
-    // iptal etmek ve durumlarını sorgulamak için gerekli metotları tanımlar
+    /// <summary>
+    /// KBS entegrasyonu için servis arayüzü
+    /// </summary>
     public interface IKbsIntegrationService
     {
+        /// <summary>
+        /// KBS'ye bildirim gönderir
+        /// </summary>
+        Task<KbsNotification> SendNotificationAsync(KbsNotification notification);
+
+        /// <summary>
+        /// KBS'ye gönderilen bildirimin durumunu sorgular
+        /// </summary>
+        Task<KbsNotificationLog> CheckNotificationStatusAsync(string referenceNumber);
+
+        /// <summary>
+        /// KBS'ye toplu bildirim gönderir
+        /// </summary>
+        Task<List<KbsNotification>> SendBatchNotificationsAsync(List<KbsNotification> notifications);
+
         // KBS bildirimleri listele (filtreleme ve sayfalama ile)
         Task<PaginatedResultDto<KbsNotificationDto>> GetNotificationsAsync(KbsNotificationFilterDto filter);
         

@@ -1,12 +1,12 @@
 using System;
 using ResidenceManagement.Core.Common;
-using ResidenceManagement.Core.Interfaces;
+// using ResidenceManagement.Core.Interfaces; // Bu satırı kaldırıyorum
 
 namespace ResidenceManagement.Core.Entities.Base
 {
     // Tüm varlıklar için temel sınıf
     // Bu sınıf firma ve şube bazlı filtreleme için ITenant arayüzünü uygular
-    public abstract class BaseEntity : ITenant
+    public abstract class BaseEntity : ResidenceManagement.Core.Common.ITenant
     {
         // Birincil anahtar
         public virtual int Id { get; set; }

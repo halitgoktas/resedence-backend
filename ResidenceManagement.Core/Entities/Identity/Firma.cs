@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using ResidenceManagement.Core.Common;
 using ResidenceManagement.Core.Entities.Base;
-using ResidenceManagement.Core.Interfaces;
 
 namespace ResidenceManagement.Core.Entities.Identity
 {
     /// <summary>
-    /// Site yönetim sistemindeki firmaları temsil eden sınıf
+    /// Site yönetim sistemindeki firmaları temsil eden sınıf.
+    /// Rezidans yönetim sistemini kullanan firmaların bilgilerini saklar.
+    /// Multi-tenant yapının temel firma bileşenidir.
     /// </summary>
-    public class Firma : BaseEntity, ITenant
+    public class Firma : BaseEntity, ResidenceManagement.Core.Common.ITenant
     {
         /// <summary>
         /// Ana kimlik - BasenEntity'den geliyor

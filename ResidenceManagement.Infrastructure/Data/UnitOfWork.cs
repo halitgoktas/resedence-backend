@@ -74,49 +74,49 @@ namespace ResidenceManagement.Infrastructure.Data
         /// <inheritdoc/>
         public void SaveChanges()
         {
-            _dbContext.SaveChanges();
+                _dbContext.SaveChanges();
         }
 
         /// <inheritdoc/>
         public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         /// <inheritdoc/>
         public void BeginTransaction()
         {
-            if (_dbContext.Database.CurrentTransaction == null)
-            {
-                _dbContext.Database.BeginTransaction();
+                if (_dbContext.Database.CurrentTransaction == null)
+                {
+                    _dbContext.Database.BeginTransaction();
             }
         }
 
         /// <inheritdoc/>
         public void CommitTransaction()
-        {
-            var transaction = _dbContext.Database.CurrentTransaction;
-            if (transaction != null)
             {
-                try
+                var transaction = _dbContext.Database.CurrentTransaction;
+                if (transaction != null)
                 {
-                    transaction.Commit();
-                }
+                    try
+                    {
+                        transaction.Commit();
+                    }
                 catch
-                {
-                    RollbackTransaction();
-                    throw;
+                    {
+                        RollbackTransaction();
+                        throw;
+                    }
                 }
-            }
         }
 
         /// <inheritdoc/>
         public void RollbackTransaction()
-        {
-            var transaction = _dbContext.Database.CurrentTransaction;
-            if (transaction != null)
             {
-                transaction.Rollback();
+                var transaction = _dbContext.Database.CurrentTransaction;
+                if (transaction != null)
+                {
+                    transaction.Rollback();
             }
         }
 
@@ -126,4 +126,4 @@ namespace ResidenceManagement.Infrastructure.Data
             _dbContext.Dispose();
         }
     }
-} 
+}

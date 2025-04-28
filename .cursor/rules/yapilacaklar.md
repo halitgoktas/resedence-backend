@@ -230,22 +230,24 @@
 - [x] **KBS Veri Modelleri**
   - [x] KbsSettings entity'si
   - [x] KbsNotification entity'si
+  - [x] KbsGuestInfo entity'si
+  - [x] KbsNotificationLog entity'si
+  - [x] KbsNotificationHistory entity'si
   - [x] KbsResidentNotificationDto
   - [x] KbsResponseDto yanıt modeli
   - [x] KbsNotificationBatchDto (toplu bildirim için)
 
-- [ ] **KBS Servis Katmanı**
+- [x] **KBS Servis Katmanı**
   - [x] IKbsIntegrationService arayüzü
   - [x] KbsIntegrationService implementasyonu
   - [x] IKbsSettingsService arayüzü
-  - [ ] KbsSettingsService implementasyonu
+  - [x] KbsSettingsService implementasyonu
 
 - [ ] **KBS Web Servis Entegrasyonu**
   - [ ] SOAP/XML web servis client
   - [ ] KBS login işlemi
   - [ ] KBS giriş bildirimi
   - [ ] KBS çıkış bildirimi
-  - [ ] KBS bildirim durumu sorgulama
 
 - [ ] **KBS Controller ve Endpoint'ler**
   - [ ] KbsSettingsController

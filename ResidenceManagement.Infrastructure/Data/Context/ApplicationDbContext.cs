@@ -50,6 +50,7 @@ namespace ResidenceManagement.Infrastructure.Data.Context
         public DbSet<Dues> Aidatlar { get; set; }
         public DbSet<ResidenceManagement.Core.Entities.Financial.Payment> Odemeler { get; set; }
         public DbSet<ResidenceManagement.Core.Entities.Financial.Expense> Giderler { get; set; }
+        public DbSet<RefreshToken> RefreshTokenlar { get; set; }
         
         // Hizmet talepleri ilişkili DbSet'ler
         public DbSet<ServiceRequest> ServiceRequests { get; set; }
@@ -126,7 +127,7 @@ namespace ResidenceManagement.Infrastructure.Data.Context
                     var filter = Expression.AndAlso(firmaEqual, subeFilter);
                     
                     // IsDeleted filtresini de ekle - eğer BaseEntity'den türüyorsa
-                    if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                    if (typeof(ResidenceManagement.Core.Entities.Base.BaseEntity).IsAssignableFrom(entityType.ClrType))
                     {
                         var isDeletedProperty = Expression.Property(parameter, "IsDeleted");
                         var isDeletedFilter = Expression.Equal(isDeletedProperty, Expression.Constant(false));
@@ -145,7 +146,7 @@ namespace ResidenceManagement.Infrastructure.Data.Context
                     _logger.LogDebug("Multi-tenant filtresi eklendi: {EntityType}", entityType.ClrType.Name);
                 }
                 // Sadece BaseEntity için soft-delete (IsDeleted) filtrelemesi
-                else if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                else if (typeof(ResidenceManagement.Core.Entities.Base.BaseEntity).IsAssignableFrom(entityType.ClrType))
                 {
                     var parameter = Expression.Parameter(entityType.ClrType, "e");
                     var isDeletedProperty = Expression.Property(parameter, "IsDeleted");
@@ -281,7 +282,7 @@ namespace ResidenceManagement.Infrastructure.Data.Context
                 }
                 
                 // BaseEntity alanlarını güncelle
-                if (entry.Entity is BaseEntity baseEntity)
+                if (entry.Entity is ResidenceManagement.Core.Entities.Base.BaseEntity baseEntity)
                 {
                     if (entry.State == EntityState.Added)
                     {
@@ -298,8 +299,8 @@ namespace ResidenceManagement.Infrastructure.Data.Context
                         baseEntity.UpdatedDate = DateTime.Now;
                         
                         // Oluşturma tarihinin değiştirilmesini engelle
-                        entry.Property(nameof(BaseEntity.CreatedDate)).IsModified = false;
-                        entry.Property(nameof(BaseEntity.CreatedBy)).IsModified = false;
+                        entry.Property(nameof(ResidenceManagement.Core.Entities.Base.BaseEntity.CreatedDate)).IsModified = false;
+                        entry.Property(nameof(ResidenceManagement.Core.Entities.Base.BaseEntity.CreatedBy)).IsModified = false;
                     }
                 }
             }

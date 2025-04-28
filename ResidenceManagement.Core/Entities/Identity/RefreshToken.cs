@@ -1,95 +1,112 @@
 using System;
-using ResidenceManagement.Core.Entities.Base;
 using ResidenceManagement.Core.Common;
-using ResidenceManagement.Core.Interfaces;
+using ResidenceManagement.Core.Entities.Base;
 
 namespace ResidenceManagement.Core.Entities.Identity
 {
     /// <summary>
-    /// Kullanıcı refresh token bilgilerini saklayan entity
+    /// Yenileme token'ları için entity sınıfı
     /// </summary>
-    public class RefreshToken : BaseEntity, ITenant
+    public class RefreshToken : ResidenceManagement.Core.Entities.Base.BaseEntity, ResidenceManagement.Core.Common.ITenant
     {
+        /// <summary>
+        /// Token ID
+        /// </summary>
+        public int Id { get; set; }
+        
         /// <summary>
         /// Token değeri
         /// </summary>
         public string Token { get; set; }
         
         /// <summary>
-        /// Son geçerlilik tarihi
-        /// </summary>
-        public DateTime ExpirationDate { get; set; }
-        
-        /// <summary>
-        /// Oluşturulduğu IP adresi
-        /// </summary>
-        public string CreatedByIp { get; set; }
-        
-        /// <summary>
-        /// Geçersiz kılınma tarihi
-        /// </summary>
-        public DateTime? RevokedDate { get; set; }
-        
-        /// <summary>
-        /// Geçersiz kılan IP adresi
-        /// </summary>
-        public string RevokedByIp { get; set; }
-        
-        /// <summary>
-        /// Yeni token ile değiştirildi mi
-        /// </summary>
-        public string ReplacedByToken { get; set; }
-        
-        /// <summary>
-        /// Geçersiz kılınma sebebi
-        /// </summary>
-        public string ReasonRevoked { get; set; }
-        
-        /// <summary>
-        /// Kullanıcı ID
+        /// Token'ın ait olduğu kullanıcı ID
         /// </summary>
         public int KullaniciId { get; set; }
         
         /// <summary>
-        /// Multi-tenant için firma ID
+        /// Token oluşturulma tarihi
         /// </summary>
-        public int FirmaId { get; set; }
+        public DateTime CreateDate { get; set; }
         
         /// <summary>
-        /// Multi-tenant için şube ID
+        /// Token geçerlilik bitiş tarihi
         /// </summary>
-        public int SubeId { get; set; }
+        public DateTime ExpiryDate { get; set; }
         
         /// <summary>
-        /// Token aktif mi
+        /// Token son geçerlilik tarihi (alternatif isim)
+        /// </summary>
+        public DateTime ExpirationDate { get; set; }
+        
+        /// <summary>
+        /// Son kullanılan IP adresi
+        /// </summary>
+        public string LastUsedIp { get; set; }
+        
+        /// <summary>
+        /// Son kullanım tarihi
+        /// </summary>
+        public DateTime? LastUsedDate { get; set; }
+        
+        /// <summary>
+        /// Token aktif mi?
         /// </summary>
         public bool IsActive { get; set; }
         
         /// <summary>
-        /// Token süresi doldu mu
+        /// Token süresi doldu mu?
         /// </summary>
-        public bool IsExpired => DateTime.UtcNow >= ExpirationDate;
+        public bool IsExpired => DateTime.UtcNow >= ExpiryDate;
         
         /// <summary>
-        /// İlişkili kullanıcı
+        /// Token iptal edildi mi?
+        /// </summary>
+        public bool IsRevoked { get; set; }
+        
+        /// <summary>
+        /// Token iptal tarihi
+        /// </summary>
+        public DateTime? RevokedDate { get; set; }
+        
+        /// <summary>
+        /// Token'ı oluşturan IP adresi
+        /// </summary>
+        public string CreatedByIp { get; set; }
+        
+        /// <summary>
+        /// Token'ı iptal eden IP adresi
+        /// </summary>
+        public string RevokedByIp { get; set; }
+        
+        /// <summary>
+        /// Bu token yerine kullanılacak yeni token
+        /// </summary>
+        public string ReplacedByToken { get; set; }
+        
+        /// <summary>
+        /// Token'ın iptal edilme nedeni
+        /// </summary>
+        public string ReasonRevoked { get; set; }
+        
+        /// <summary>
+        /// Oluşturulan cihaz bilgisi
+        /// </summary>
+        public string DeviceInfo { get; set; }
+        
+        /// <summary>
+        /// Kullanıcı navigasyon özelliği
         /// </summary>
         public virtual Kullanici Kullanici { get; set; }
         
         /// <summary>
-        /// Varsayılan constructor
+        /// Firma ID - Multi-tenant yapı için
         /// </summary>
-        public RefreshToken()
-        {
-            IsActive = true;
-        }
+        public int FirmaId { get; set; }
         
         /// <summary>
-        /// Token'ın aktif olup olmadığını hesaplar
+        /// Şube ID - Multi-tenant yapı için
         /// </summary>
-        /// <returns>Token aktif ise true, değilse false</returns>
-        public bool CalculateIsActive()
-        {
-            return RevokedDate == null && !IsExpired;
-        }
+        public int SubeId { get; set; }
     }
 } 

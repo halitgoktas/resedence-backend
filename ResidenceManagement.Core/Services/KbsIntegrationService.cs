@@ -16,6 +16,8 @@ using ResidenceManagement.Core.Entities.Identity;
 using ResidenceManagement.Core.Entities.Person;
 using ResidenceManagement.Core.Entities.Property;
 using ResidenceManagement.Core.Interfaces.Services;
+using ResidenceManagement.Core.Entities.Kbs;
+using System.Linq;
 
 namespace ResidenceManagement.Core.Services
 {
@@ -76,6 +78,237 @@ namespace ResidenceManagement.Core.Services
                 _httpClient.DefaultRequestHeaders.Add("X-Api-Secret", _apiSecret);
                 
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        }
+
+        /// <summary>
+        /// KBS'ye bildirim gönderir
+        /// </summary>
+        public async Task<KbsNotification> SendNotificationAsync(KbsNotification notification)
+        {
+            try
+            {
+                _logger.LogInformation("KBS bildirimi gönderiliyor. Bildirim ID: {NotificationId}", notification.Id);
+                
+                // Bildirimi KBS formatına dönüştür
+                var kbsRequest = MapToKbsRequest(notification);
+                
+                // KBS API'sine POST isteği gönder
+                var response = await _httpClient.PostAsJsonAsync("/api/notifications", kbsRequest);
+                
+                // Yanıtı kontrol et
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    
+                    // KBS'den gelen referans numarasını kaydet
+                    try 
+                    {
+                        var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                        if (jsonResponse.TryGetProperty("referenceNumber", out var refNumber))
+                        {
+                            notification.ReferenceId = refNumber.GetString();
+                        }
+                    }
+                    catch {}
+                    
+                    // Bildirimin durumunu güncelle
+                    notification.Status = KbsNotificationStatus.Submitted;
+                    notification.NotificationDate = DateTime.Now;
+                    notification.StatusMessage = "KBS bildirimi başarıyla gönderildi";
+                    
+                    _logger.LogInformation("KBS bildirimi başarıyla gönderildi. Referans No: {ReferenceNumber}", notification.ReferenceId);
+                    return notification;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("KBS bildirimi gönderilemedi. Hata: {ErrorContent}", errorContent);
+                    
+                    // Bildirimin durumunu hata olarak güncelle
+                    notification.Status = KbsNotificationStatus.Failed;
+                    notification.StatusMessage = $"KBS bildirimi gönderilemedi: {errorContent}";
+                    notification.RetryCount++;
+                    
+                    return notification;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "KBS bildirimi gönderilirken hata oluştu");
+                
+                // Bildirimin durumunu hata olarak güncelle
+                notification.Status = KbsNotificationStatus.Failed;
+                notification.StatusMessage = $"KBS bildirimi gönderilirken hata: {ex.Message}";
+                notification.RetryCount++;
+                
+                return notification;
+            }
+        }
+
+        /// <summary>
+        /// KBS'ye toplu bildirim gönderir
+        /// </summary>
+        public async Task<List<KbsNotification>> SendBatchNotificationsAsync(List<KbsNotification> notifications)
+        {
+            try
+            {
+                _logger.LogInformation("KBS'ye {Count} adet toplu bildirim gönderiliyor", notifications.Count);
+                var processedNotifications = new List<KbsNotification>();
+                
+                foreach (var notification in notifications)
+                {
+                    try
+                    {
+                        var result = await SendNotificationAsync(notification);
+                        processedNotifications.Add(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Bildirim gönderilirken hata oluştu. Bildirim ID: {NotificationId}", notification.Id);
+                        notification.Status = KbsNotificationStatus.Failed;
+                        notification.StatusMessage = $"Bildirim işlenirken hata oluştu: {ex.Message}";
+                        notification.RetryCount++;
+                        processedNotifications.Add(notification);
+                    }
+                }
+                
+                _logger.LogInformation("Toplu bildirim işlemi tamamlandı. Toplam: {Total}, Başarılı: {Success}, Başarısız: {Failed}",
+                    processedNotifications.Count,
+                    processedNotifications.Count(n => n.Status == KbsNotificationStatus.Submitted),
+                    processedNotifications.Count(n => n.Status == KbsNotificationStatus.Failed));
+                
+                return processedNotifications;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Toplu bildirim işlemi sırasında beklenmeyen hata oluştu");
+                throw new KbsIntegrationException("Toplu bildirim işlemi sırasında beklenmeyen hata oluştu", ex);
+            }
+        }
+
+        /// <summary>
+        /// KBS'ye bildirim gönderir
+        /// </summary>
+        public async Task<KbsSubmissionResultDto> SubmitNotificationAsync(KbsNotification notification)
+        {
+            try
+            {
+                _logger.LogInformation("KBS'ye bildirim gönderiliyor. Bildirim ID: {NotificationId}", notification.Id);
+                
+                // SendNotificationAsync metodunu kullanarak bildirim gönder
+                var result = await SendNotificationAsync(notification);
+                
+                // Submission result oluştur
+                var submissionResult = new KbsSubmissionResultDto
+                {
+                    Success = result.Status == KbsNotificationStatus.Submitted,
+                    StatusCode = result.Status == KbsNotificationStatus.Submitted ? "200" : "400",
+                    Message = result.StatusMessage,
+                    ReferenceNumber = result.ReferenceId,
+                    SubmissionDate = DateTime.Now
+                };
+                
+                if (submissionResult.Success)
+                {
+                    _logger.LogInformation("KBS bildirimi başarıyla gönderildi. Bildirim ID: {NotificationId}", notification.Id);
+                }
+                else
+                {
+                    _logger.LogError("KBS bildirimi gönderilemedi. Bildirim ID: {NotificationId}, Hata: {ErrorMessage}", 
+                        notification.Id, result.StatusMessage);
+                }
+                
+                return submissionResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "KBS bildirimi gönderilirken hata oluştu. Bildirim ID: {NotificationId}", notification.Id);
+                
+                return new KbsSubmissionResultDto
+                {
+                    Success = false,
+                    StatusCode = "500",
+                    Message = $"KBS bildirimi gönderilirken hata oluştu: {ex.Message}",
+                    SubmissionDate = DateTime.Now
+                };
+            }
+        }
+
+        /// <summary>
+        /// KBS bildirim durumunu kontrol eder
+        /// </summary>
+        public async Task<KbsNotificationLog> CheckNotificationStatusAsync(string referenceNumber)
+        {
+            try
+            {
+                _logger.LogInformation("KBS bildirim durumu kontrol ediliyor. Referans No: {ReferenceNumber}", referenceNumber);
+                
+                // KBS API'sine GET isteği gönder
+                var response = await _httpClient.GetAsync($"/api/notifications/status/{referenceNumber}");
+                
+                // Yeni bir log kaydı oluştur
+                var log = new KbsNotificationLog
+                {
+                    ReferenceId = referenceNumber,
+                    ActionType = KbsLogActionType.CheckStatus,
+                    LogDate = DateTime.Now,
+                    LogLevel = "Information",
+                    Message = "KBS bildirim durumu sorgulandı"
+                };
+                
+                // Yanıtı kontrol et
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    log.ResponseContent = responseContent;
+                    log.StatusCode = ((int)response.StatusCode).ToString();
+                    log.IsSuccess = true;
+                    
+                    try 
+                    {
+                        var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                        if (jsonResponse.TryGetProperty("status", out var status))
+                        {
+                            log.Message = $"Bildirim durumu: {status.GetString()}";
+                        }
+                    }
+                    catch (Exception ex) 
+                    {
+                        _logger.LogWarning(ex, "KBS yanıtı JSON formatında değil");
+                    }
+                    
+                    _logger.LogInformation("KBS bildirim durumu başarıyla alındı. Referans No: {ReferenceNumber}", referenceNumber);
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    log.ResponseContent = errorContent;
+                    log.StatusCode = ((int)response.StatusCode).ToString();
+                    log.IsSuccess = false;
+                    log.Message = $"KBS bildirim durumu alınamadı: {errorContent}";
+                    
+                    _logger.LogError("KBS bildirim durumu alınamadı. Hata: {ErrorContent}", errorContent);
+                }
+                
+                return log;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "KBS bildirim durumu kontrol edilirken hata oluştu");
+                
+                // Hata durumunda log kaydı oluştur
+                var log = new KbsNotificationLog
+                {
+                    ReferenceId = referenceNumber,
+                    ActionType = KbsLogActionType.CheckStatus,
+                    LogDate = DateTime.Now,
+                    LogLevel = "Error",
+                    IsSuccess = false,
+                    Message = $"KBS bildirim durumu kontrol edilirken hata oluştu: {ex.Message}"
+                };
+                
+                return log;
+            }
         }
 
         /// <summary>
@@ -243,73 +476,7 @@ namespace ResidenceManagement.Core.Services
             }
         }
 
-        // KBS'ye bildirim gönderme
-        public async Task<KbsSubmissionResultDto> SubmitNotificationAsync(KbsNotification notification)
-        {
-            try
-            {
-                _logger.LogInformation("KBS bildirimi gönderiliyor. Bildirim ID: {NotificationId}", notification.Id);
-                
-                // Bildirimi KBS formatına dönüştür
-                var kbsRequest = MapToKbsRequest(notification);
-                
-                // KBS API'sine POST isteği gönder
-                var response = await _httpClient.PostAsJsonAsync("/api/notifications", kbsRequest);
-                
-                // Yanıtı kontrol et
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var result = new KbsSubmissionResultDto
-                    {
-                        Success = true,
-                        StatusCode = response.StatusCode.ToString(),
-                        Message = "KBS bildirimi başarıyla gönderildi",
-                        SubmissionDate = DateTime.Now
-                    };
-                    
-                    // Yanıttan referans numarasını alır
-                    try 
-                    {
-                        var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
-                        if (jsonResponse.TryGetProperty("referenceNumber", out var refNumber))
-                        {
-                            result.ReferenceNumber = refNumber.GetString();
-                        }
-                    }
-                    catch {}
-                    
-                    _logger.LogInformation("KBS bildirimi başarıyla gönderildi. Referans No: {ReferenceNumber}", result.ReferenceNumber);
-                    return result;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("KBS bildirimi gönderilemedi. Hata: {ErrorContent}", errorContent);
-                    
-                    return new KbsSubmissionResultDto
-                    {
-                        Success = false,
-                        StatusCode = response.StatusCode.ToString(),
-                        Message = $"KBS bildirimi gönderilemedi: {errorContent}",
-                        SubmissionDate = DateTime.Now
-                    };
-                }
-            }
-            catch (Exception ex) when (ex is not KbsIntegrationException)
-            {
-                _logger.LogError(ex, "KBS bildirimi gönderilirken hata oluştu");
-                return new KbsSubmissionResultDto
-                {
-                    Success = false,
-                    StatusCode = "Error",
-                    Message = $"KBS bildirimi gönderilirken beklenmeyen bir hata oluştu: {ex.Message}",
-                    SubmissionDate = DateTime.Now
-                };
-            }
-        }
-
-        // KBS bildirimini iptal etme
+        // KBS bildirimi iptal etme
         public async Task<KbsCancellationResultDto> CancelNotificationAsync(string kbsReferenceNumber, string cancellationReason)
         {
             try
@@ -602,22 +769,22 @@ namespace ResidenceManagement.Core.Services
                 CheckInDate = notification.CheckInDate,
                 ExpectedCheckOutDate = notification.PlannedCheckOutDate,
                 RoomNumber = notification.ApartmentNumber,
-                Guest = new KbsGuestModel
+                Guest = notification.Guests?.FirstOrDefault() != null ? new KbsGuestModel
                 {
-                    IdType = notification.Guests?.FirstOrDefault()?.IdentityType.ToString() ?? "Unknown",
-                    IdNumber = notification.Guests?.FirstOrDefault()?.IdentityNumber,
-                    FirstName = notification.Guests?.FirstOrDefault()?.FirstName,
-                    LastName = notification.Guests?.FirstOrDefault()?.LastName,
-                    BirthDate = notification.Guests?.FirstOrDefault()?.DateOfBirth ?? DateTime.MinValue,
-                    Gender = notification.Guests?.FirstOrDefault()?.Gender.ToString() ?? "Unknown",
-                    Nationality = notification.Guests?.FirstOrDefault()?.Nationality,
-                    FatherName = notification.Guests?.FirstOrDefault()?.FatherName,
-                    MotherName = notification.Guests?.FirstOrDefault()?.MotherName,
-                    BirthPlace = notification.Guests?.FirstOrDefault()?.PlaceOfBirth,
-                    Address = notification.Guests?.FirstOrDefault()?.Address,
-                    Phone = notification.Guests?.FirstOrDefault()?.PhoneNumber,
-                    Email = notification.Guests?.FirstOrDefault()?.Email
-                }
+                    IdType = notification.Guests.FirstOrDefault().IdentityType.ToString(),
+                    IdNumber = notification.Guests.FirstOrDefault().IdentityNumber,
+                    FirstName = notification.Guests.FirstOrDefault().FirstName,
+                    LastName = notification.Guests.FirstOrDefault().LastName,
+                    BirthDate = notification.Guests.FirstOrDefault().BirthDate,
+                    Gender = notification.Guests.FirstOrDefault().Gender.ToString(),
+                    Nationality = notification.Guests.FirstOrDefault().Nationality,
+                    FatherName = notification.Guests.FirstOrDefault().FatherName,
+                    MotherName = notification.Guests.FirstOrDefault().MotherName,
+                    BirthPlace = notification.Guests.FirstOrDefault().BirthPlace,
+                    Address = notification.Guests.FirstOrDefault().Address,
+                    Phone = notification.Guests.FirstOrDefault().PhoneNumber,
+                    Email = notification.Guests.FirstOrDefault().Email
+                } : null
             };
         }
     }

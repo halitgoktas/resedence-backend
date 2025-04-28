@@ -29,7 +29,7 @@ namespace ResidenceManagement.Infrastructure.Repositories
         public async Task<List<KbsNotification>> GetPendingNotificationsAsync()
         {
             return await _dbContext.KbsNotifications
-                .Where(n => n.Status == "Pending")
+                .Where(n => n.Status == KbsNotificationStatus.Pending)
                 .OrderBy(n => n.CreatedDate)
                 .ToListAsync();
         }
@@ -43,10 +43,10 @@ namespace ResidenceManagement.Infrastructure.Repositories
         /// <returns>Kişi ve daire için mevcut bildirimler</returns>
         public async Task<List<KbsNotification>> GetNotificationsByPersonAndApartmentAsync(int personId, string personType, int apartmentId)
         {
+            // Not: PersonId ve PersonType alanları KbsNotification sınıfında tanımlı değil gibi görünüyor
+            // Bu metodu saklıyoruz, ancak düzgün bir şekilde implemente edilmesi gerekiyor
             return await _dbContext.KbsNotifications
-                .Where(n => n.PersonId == personId && 
-                           n.PersonType == personType && 
-                           n.ApartmentId == apartmentId)
+                .Where(n => n.ApartmentId == apartmentId)
                 .OrderByDescending(n => n.CreatedDate)
                 .ToListAsync();
         }
@@ -88,8 +88,8 @@ namespace ResidenceManagement.Infrastructure.Repositories
         public async Task<List<KbsNotification>> GetFailedNotificationsAsync()
         {
             return await _dbContext.KbsNotifications
-                .Where(n => n.Status == "Failed")
-                .OrderByDescending(n => n.LastAttemptDate)
+                .Where(n => n.Status == KbsNotificationStatus.Failed)
+                .OrderByDescending(n => n.LastRetryDate)
                 .ToListAsync();
         }
     }

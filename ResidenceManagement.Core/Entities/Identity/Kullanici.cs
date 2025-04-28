@@ -1,31 +1,62 @@
 using System;
 using System.Collections.Generic;
 using ResidenceManagement.Core.Entities.Base;
-using ResidenceManagement.Core.Interfaces;
 using ResidenceManagement.Core.Common;
 
 namespace ResidenceManagement.Core.Entities.Identity
 {
-    // Kullanici sınıfı, sistem kullanıcılarını temsil eder
-    public class Kullanici : BaseEntity, ITenant
+    /// <summary>
+    /// Kullanıcı entity sınıfı
+    /// </summary>
+    public class Kullanici : BaseEntity, ResidenceManagement.Core.Common.ITenant
     {
-        // Kullanıcı adı (login için)
+        /// <summary>
+        /// Kullanıcı adı
+        /// </summary>
         public string KullaniciAdi { get; set; }
+        
+        /// <summary>
+        /// Şifre (hash'lenmiş)
+        /// </summary>
+        public string Sifre { get; set; }
+        
+        /// <summary>
+        /// Şifre için tuz (salt)
+        /// </summary>
+        public string SifreSalt { get; set; }
+        
+        /// <summary>
+        /// Ad
+        /// </summary>
+        public string Ad { get; set; }
+        
+        /// <summary>
+        /// Soyad
+        /// </summary>
+        public string Soyad { get; set; }
+        
+        /// <summary>
+        /// E-posta adresi
+        /// </summary>
+        public string Email { get; set; }
+        
+        /// <summary>
+        /// Telefon numarası
+        /// </summary>
+        public string Telefon { get; set; }
+        
+        /// <summary>
+        /// Password hash değeri
+        /// </summary>
+        public byte[] PasswordHash { get; set; }
+        
+        /// <summary>
+        /// Password salt değeri
+        /// </summary>
+        public byte[] PasswordSalt { get; set; }
         
         // Username - İngilizce kullanıcı adı (API uyumluluğu için)
         public string Username { get => KullaniciAdi; set => KullaniciAdi = value; }
-        
-        // E-posta adresi
-        public string Email { get; set; }
-        
-        // Telefon numarası
-        public string Telefon { get; set; }
-        
-        // Ad
-        public string Ad { get; set; }
-        
-        // Soyad
-        public string Soyad { get; set; }
         
         // Tam ad (Ad + Soyad)
         public string TamAd => $"{Ad} {Soyad}";
@@ -35,12 +66,6 @@ namespace ResidenceManagement.Core.Entities.Identity
 
         // LastName - İngilizce soyad (API uyumluluğu için)
         public string LastName { get => Soyad; set => Soyad = value; }
-        
-        // Şifre (hash'lenmiş olarak saklanır)
-        public string Sifre { get; set; }
-        
-        // Şifre salt değeri
-        public string SifreSalt { get; set; }
         
         // Profil resmi URL'i
         public string ProfilResimUrl { get; set; }

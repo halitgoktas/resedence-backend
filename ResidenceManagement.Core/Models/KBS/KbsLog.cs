@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using ResidenceManagement.Core.Entities.Base;
+using ResidenceManagement.Core.Entities.Kbs;
 
 namespace ResidenceManagement.Core.Models.KBS
 {

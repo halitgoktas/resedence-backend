@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using ResidenceManagement.Core.Models.KBS;
+using ResidenceManagement.Core.Entities.Kbs;
 
 namespace ResidenceManagement.Core.DTOs
 {
@@ -17,49 +18,125 @@ namespace ResidenceManagement.Core.DTOs
         public bool HasNextPage => PageNumber < TotalPages;
     }
 
-    // KBS bildirimleri için filtreleme DTO
+    /// <summary>
+    /// KBS bildirim filtreleme DTO'su
+    /// </summary>
     public class KbsNotificationFilterDto
     {
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public string NotificationNumber { get; set; }
-        public int? ApartmentId { get; set; }
-        public string ApartmentNumber { get; set; }
-        public int? BlockId { get; set; }
-        public int? ResidenceId { get; set; }
         public KbsNotifyStatus? Status { get; set; }
-        public bool? IsSubmitted { get; set; }
-        public bool? IsCancelled { get; set; }
-        public string GuestName { get; set; }
-        public string GuestIdentityNumber { get; set; }
+        public string SearchText { get; set; }
         public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
-        public string SortBy { get; set; } = "CreatedDate";
-        public bool SortDesc { get; set; } = true;
+        public int PageSize { get; set; } = 10;
     }
 
-    // KBS bildirim listeleme DTO
+    /// <summary>
+    /// KBS bildirim yanıt DTO'su
+    /// </summary>
+    public class KbsNotificationResponseDto
+    {
+        public int Id { get; set; }
+        public string NotificationNumber { get; set; }
+        public KbsNotifyStatus Status { get; set; }
+        public string ResponseMessage { get; set; }
+        public string ReferenceNumber { get; set; }
+    }
+
+    /// <summary>
+    /// KBS bildirim DTO'su
+    /// </summary>
     public class KbsNotificationDto
     {
         public int Id { get; set; }
         public string NotificationNumber { get; set; }
+        public KbsNotificationType NotificationType { get; set; }
+        public KbsNotifyStatus Status { get; set; }
         public DateTime CheckInDate { get; set; }
         public DateTime PlannedCheckOutDate { get; set; }
         public DateTime? ActualCheckOutDate { get; set; }
-        public KbsNotifyStatus Status { get; set; }
-        public string StatusText => Status.ToString();
+        public int GuestCount { get; set; }
         public string ApartmentNumber { get; set; }
         public string BlockName { get; set; }
-        public string ResidenceName { get; set; }
-        public int GuestCount { get; set; }
-        public string PrimaryGuestName { get; set; }
-        public string PrimaryGuestIdentityNumber { get; set; }
-        public string KbsReferenceId { get; set; }
-        public DateTime CreationDate { get; set; }
-        public DateTime? SubmissionDate { get; set; }
-        public bool IsCancelled { get; set; }
-        public string CreatedByUserName { get; set; }
-        public string LastResponseMessage { get; set; }
+        public StayPurpose StayPurpose { get; set; }
+        public bool IsPaid { get; set; }
+        public List<KbsGuestInfoDto> Guests { get; set; }
+    }
+
+    /// <summary>
+    /// KBS misafir bilgisi DTO'su
+    /// </summary>
+    public class KbsGuestInfoDto
+    {
+        public int Id { get; set; }
+        public GuestType GuestType { get; set; }
+        public IdentityType IdentityType { get; set; }
+        public string IdentityNumber { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string FatherName { get; set; }
+        public string MotherName { get; set; }
+        public DateTime BirthDate { get; set; }
+        public string BirthPlace { get; set; }
+        public Gender Gender { get; set; }
+        public MaritalStatus MaritalStatus { get; set; }
+        public string Nationality { get; set; }
+    }
+
+    /// <summary>
+    /// KBS bildirim oluşturma DTO'su
+    /// </summary>
+    public class CreateKbsNotificationDto
+    {
+        public int ApartmentId { get; set; }
+        public DateTime CheckInDate { get; set; }
+        public DateTime PlannedCheckOutDate { get; set; }
+        public StayPurpose StayPurpose { get; set; }
+        public List<CreateKbsGuestInfoDto> Guests { get; set; }
+    }
+
+    /// <summary>
+    /// KBS log DTO'su
+    /// </summary>
+    public class KbsNotificationLogDto
+    {
+        public int Id { get; set; }
+        public KbsLogActionType ActionType { get; set; }
+        public DateTime ActionDate { get; set; }
+        public string UserName { get; set; }
+        public string Description { get; set; }
+        public bool IsSuccess { get; set; }
+        public string ResponseCode { get; set; }
+        public string ResponseMessage { get; set; }
+    }
+
+    /// <summary>
+    /// KBS bildirim durum güncelleme DTO'su
+    /// </summary>
+    public class UpdateKbsNotificationStatusDto
+    {
+        public KbsNotifyStatus OldStatus { get; set; }
+        public KbsNotifyStatus NewStatus { get; set; }
+        public string Description { get; set; }
+    }
+
+    /// <summary>
+    /// KBS bildirim iptal DTO'su
+    /// </summary>
+    public class CancelKbsNotificationDto
+    {
+        public KbsNotifyStatus Status { get; set; }
+        public string CancellationReason { get; set; }
+    }
+
+    /// <summary>
+    /// KBS bildirim durum sorgu yanıt DTO'su
+    /// </summary>
+    public class KbsNotificationStatusResponseDto
+    {
+        public string NotificationNumber { get; set; }
+        public KbsNotifyStatus Status { get; set; }
+        public string ResponseMessage { get; set; }
     }
 
     // KBS detaylı bildirim DTO
@@ -105,68 +182,6 @@ namespace ResidenceManagement.Core.DTOs
         public List<KbsNotificationHistoryDto> History { get; set; } = new List<KbsNotificationHistoryDto>();
     }
 
-    // KBS misafir bilgisi DTO
-    public class KbsGuestInfoDto
-    {
-        public int Id { get; set; }
-        public int KbsNotificationId { get; set; }
-        public GuestType GuestType { get; set; }
-        public IdentityType IdentityType { get; set; }
-        public string IdentityNumber { get; set; }
-        public string IssuingCountry { get; set; }
-        public DateTime? DocumentExpiryDate { get; set; }
-        [Required]
-        public string FirstName { get; set; }
-        [Required]
-        public string LastName { get; set; }
-        public string FatherName { get; set; }
-        public string MotherName { get; set; }
-        public DateTime? DateOfBirth { get; set; }
-        public string PlaceOfBirth { get; set; }
-        public Gender? Gender { get; set; }
-        [Required]
-        public string Nationality { get; set; }
-        public MaritalStatus? MaritalStatus { get; set; }
-        public string Profession { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public string Address { get; set; }
-        public string City { get; set; }
-        public string Country { get; set; }
-        public string PostalCode { get; set; }
-        public string VehiclePlate { get; set; }
-        public string Notes { get; set; }
-        public bool IsRegisteredInKbs { get; set; }
-        public bool IsRegisteredGuest { get; set; }
-        public bool IsGroupLeader { get; set; }
-        public string PhotoUrl { get; set; }
-        public string IdentityFrontPhotoUrl { get; set; }
-        public string IdentityBackPhotoUrl { get; set; }
-        public string KbsReferenceNumber { get; set; }
-        public bool IsVerifiedByKbs { get; set; }
-        public DateTime? KbsVerificationDate { get; set; }
-        public string KbsErrorMessage { get; set; }
-    }
-
-    // KBS bildirim oluşturma DTO
-    public class KbsNotificationCreateDto
-    {
-        [Required]
-        public int ApartmentId { get; set; }
-        public string ApartmentNumber { get; set; }
-        public int? BlockId { get; set; }
-        public int ResidenceId { get; set; }
-        [Required]
-        public DateTime CheckInDate { get; set; }
-        [Required]
-        public DateTime PlannedCheckOutDate { get; set; }
-        public StayPurpose StayPurpose { get; set; } = StayPurpose.Tourism;
-        public bool IsPaid { get; set; } = true;
-        public string Notes { get; set; }
-        public int? ReservationId { get; set; }
-        public List<KbsGuestInfoDto> Guests { get; set; } = new List<KbsGuestInfoDto>();
-    }
-
     // KBS bildirim güncelleme DTO
     public class KbsNotificationUpdateDto
     {
@@ -177,25 +192,6 @@ namespace ResidenceManagement.Core.DTOs
         public bool IsPaid { get; set; }
         public string Notes { get; set; }
         public List<KbsGuestInfoDto> Guests { get; set; } = new List<KbsGuestInfoDto>();
-    }
-
-    // KBS bildirim log DTO
-    public class KbsNotificationLogDto
-    {
-        public int Id { get; set; }
-        public int KbsNotificationId { get; set; }
-        public KbsLogActionType ActionType { get; set; }
-        public string ActionTypeText => ActionType.ToString();
-        public DateTime ActionDate { get; set; }
-        public int? UserId { get; set; }
-        public string UserName { get; set; }
-        public string Description { get; set; }
-        public string ResultStatus { get; set; }
-        public string ErrorMessage { get; set; }
-        public string ResponseCode { get; set; }
-        public string ResponseMessage { get; set; }
-        public bool IsSuccess { get; set; }
-        public int? ProcessDuration { get; set; }
     }
 
     // KBS bildirim geçmişi DTO
@@ -322,16 +318,6 @@ namespace ResidenceManagement.Core.DTOs
         public string Message { get; set; }
         public List<string> ValidationErrors { get; set; }
         public DateTime SubmissionDate { get; set; } = DateTime.Now;
-    }
-
-    // KBS bildirim durumu DTO
-    public class KbsNotificationStatusResultDto
-    {
-        public string ReferenceNumber { get; set; }
-        public string Status { get; set; }
-        public string StatusCode { get; set; }
-        public string StatusMessage { get; set; }
-        public DateTime LastUpdated { get; set; }
     }
 
     // KBS günlük rapor DTO

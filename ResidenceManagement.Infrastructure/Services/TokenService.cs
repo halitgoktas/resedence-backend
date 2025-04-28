@@ -23,7 +23,7 @@ namespace ResidenceManagement.Infrastructure.Services
     public class TokenService : ITokenService
     {
         private readonly JwtSettings _jwtSettings;
-        private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly ResidenceManagement.Core.Interfaces.IRefreshTokenRepository _refreshTokenRepository;
         private readonly IRepository<Kullanici> _kullaniciRepository;
         private readonly IRepository<Rol> _rolRepository;
         private readonly IRepository<UserRole> _userRoleRepository;
@@ -34,7 +34,7 @@ namespace ResidenceManagement.Infrastructure.Services
         /// </summary>
         public TokenService(
             IOptions<JwtSettings> jwtSettings,
-            IRefreshTokenRepository refreshTokenRepository,
+            ResidenceManagement.Core.Interfaces.IRefreshTokenRepository refreshTokenRepository,
             IRepository<Kullanici> kullaniciRepository,
             IRepository<Rol> rolRepository,
             IRepository<UserRole> userRoleRepository,

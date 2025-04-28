@@ -8,11 +8,17 @@ Bu doküman, Rezidans Yönetim Sistemi projesindeki önemli değişiklikleri ve 
 - Projenin kapsamlı özelliklerini açıklayan `index.html` dokümantasyon sayfası
 - Bilgi tabanı için `.cursor/knowledge-base.md` dosyası
 - Multi-tenant yapı için temel altyapı geliştirmeleri
+- Hata önleme kuralları için `.cursor/rules/hataonleme-kurallar-dizisi.md` dosyası
+- Geliştirme sıralaması için `.cursor/rules/yapilacaklar.md` dosyası
+- Hata çözüm süreçleri için `.cursor/rules/hata-cozumu.md` dosyası
+- Genel geliştirme kuralları için `.cursor/rules/genel-kurallar.md` dosyası
 
 ### Değişiklikler
 - LoggingServiceExtensions.cs dosyasında LogLevel belirsizliği düzeltildi
 - ActionArguments erişim problemi çözüldü
 - Null kontrolü ve güvenli null işleme eklendi
+- Geliştirme standartları ve kuralları güncellendi
+- Hata önleme ve çözüm süreçleri detaylandırıldı
 
 ### Düzeltmeler
 - LoggingServiceExtensions.cs'deki derlenme hataları giderildi

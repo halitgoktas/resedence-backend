@@ -18,5 +18,20 @@ namespace ResidenceManagement.Core.DTOs.Authentication
         /// </summary>
         [Required(ErrorMessage = "Refresh token gereklidir.")]
         public string RefreshToken { get; set; }
+        
+        /// <summary>
+        /// İstek yapılan IP adresi
+        /// </summary>
+        public string IpAddress { get; set; }
+        
+        /// <summary>
+        /// Cihaz bilgisi
+        /// </summary>
+        public string DeviceInfo { get; set; }
+        
+        /// <summary>
+        /// Kullanıcı kimliği
+        /// </summary>
+        public int UserId { get; set; }
     }
 } 

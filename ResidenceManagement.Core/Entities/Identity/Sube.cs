@@ -7,9 +7,11 @@ using ResidenceManagement.Core.Interfaces;
 namespace ResidenceManagement.Core.Entities.Identity
 {
     /// <summary>
-    /// Firma altındaki şubeleri temsil eden sınıf
+    /// Firma altındaki şubeleri temsil eden sınıf.
+    /// Her şube bir firmaya bağlıdır ve multi-tenant yapıda SubeId üzerinden filtrelenir.
+    /// Şubeler, bir firmanın farklı bölgelerdeki/illerdeki lokasyonlarıdır.
     /// </summary>
-    public class Sube : BaseEntity, ITenant
+    public class Sube : BaseEntity, ResidenceManagement.Core.Common.ITenant
     {
         /// <summary>
         /// Şubenin benzersiz kimliği
