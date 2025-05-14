@@ -1,11 +1,6 @@
----
-description: 
-globs: 
-alwaysApply: true
----
 # Residence Manager - Yazılım Geliştirme Standartları
 
-Bu dokümantasyon, SQL Server, C# (.NET) ve React.js ile Clean Architecture/Onion Architecture prensiplerine dayalı geliştirme yaparken uyulması gereyken teknik standartları içerir. Tüm geliştirme, refaktör ve bakım işlemleri bu standartlara bağlı kalmalıdır.
+Bu dokümantasyon, SQL Server, C# (.NET) ve React.js ile Clean Architecture/Onion Architecture prensiplerine dayalı geliştirme yaparken uyulması gereken teknik standartları içerir. Tüm geliştirme, refaktör ve bakım işlemleri bu standartlara bağlı kalmalıdır.
 
 ## 1. Mimari ve Tasarım İlkeleri
 
@@ -69,23 +64,22 @@ Bu dokümantasyon, SQL Server, C# (.NET) ve React.js ile Clean Architecture/Onio
    - Örnek: public virtual Company Company { get; set; }
    - Örnek: public virtual ICollection<Branch> Branches { get; set; }
 
-### 2.3 Dosya Başlangıç Yorum Standardı,  
-    2.4 sayfa içie kod boklarını, vb başlıkların  başına kodun ne işe yaradığı görevi hakkında yorum satırar
+### 2.3 Dosya Başlangıç Yorum Standardı
 Her .cs dosyasının başında aşağıdaki formatta yorum bloğu bulunmalıdır:
 
 ```csharp
-// -----
+// -----------------------------------------------------------------------
 // <copyright file="EntityName.cs" company="ResidenceManager">
 // Copyright (c) ResidenceManager. All rights reserved.
 // </copyright>
-// -----
+// -----------------------------------------------------------------------
 // Purpose: [Entity/Service/Controller amacının kısa açıklaması]
 // Dependencies: [Bağımlı olduğu temel sınıflar/servisler]
 // Usage: [Kullanım örneği veya önemli notlar]
 // Author: [Geliştirici adı]
 // Created: [Oluşturulma tarihi]
 // Modified: [Son değişiklik tarihi]
-// -----
+// -----------------------------------------------------------------------
 ```
 
 ### 2.4 Namespace Standardı
@@ -120,7 +114,7 @@ namespace ResidenceManager.Entities.Firma
 Aşağıdaki çeviri sözlüğü, temel entity ve kavramların Türkçe-İngilizce karşılıklarını göstermektedir:
 
 | Türkçe        | İngilizce           |
-|---|---|
+|---------------|---------------------|
 | Firma         | Company             |
 | Sube          | Branch              |
 | Daire         | Apartment           |
@@ -453,138 +447,4 @@ public class Company : BaseEntity, ITenant
    - Kritik iş akışı testleri
    - Veritabanı veri bütünlüğü ve migration geri alma testleri
 
-## 8. Repository Pattern ve Interface Yönetimi Kritik Kuralları
-
-### 8.1 Repository Arayüzleri ve Implementasyonları
-- **Interface Hiyerarşisini Koruma**: Interface hiyerarşisi değiştirildiğinde tüm implementasyonlar eksiksiz güncellenmeli
-- **Metot İmplementasyonları Kontrol Listesi**:
-  - [ ] Interface'lerde tanımlanan tüm metotlar implementasyonda bulunmalı (eksik metot olmamalı)
-  - [ ] Interfaceler arası kalıtım yapıldığında tüm üst interface'lerin metodları implement edilmeli
-  - [ ] [Obsolete] ile işaretlenen metodlar mutlaka implementasyonlarda da olmalı
-  - [ ] Multi-tenant metotları (SetCompanyAndBranchId, SetFirmaAndBranchId) eksiksiz implement edilmeli
-
-### 8.2 Mükerrer Kod Önleme
-- **Adapter Sınıfı Önlemleri**:
-  - Aynı ad alanında aynı isimde birden fazla sınıf tanımlamayın
-  - UnitOfWork sınıfında embedded/nested sınıf tanımlamak yerine ayrı dosyada sınıf tanımlayın
-  - Repository implementasyonları tekrarsız olmalı ve DRY prensibine uymalı
-- **Interface Referans Yönetimi**:
-  - Referans edilecek interface'ler için tam namespace yolu kullanın (örn: `ResidenceManagement.Core.Interfaces.IRepository<T>`)
-  - İsim çakışması olan sınıflar için using alias kullanın (örn: `using BaseRepo = ResidenceManagement.Core.Interfaces.Repositories.IBaseRepository<T>`)
-
-### 8.3 Refaktör ve Değişiklik Süreçleri
-- **Refaktör Kontrol Listesi**:
-  - [ ] Mevcut kodun tam analiziyle başlayın, mevcut yapıyı anlamadan değişiklik yapmayın
-  - [ ] Değişiklik öncesi etki analizi yapın (hangi sınıflar/metotlar etkilenecek)
-  - [ ] Önce küçük, test edilebilir değişiklikler yapın, sonra bunları entegre edin
-  - [ ] Her değişiklik sonrası build edin, hataları düzeltin
-  - [ ] Dependency Injection kayıtlarını kontrol edin
-- **Geri Uyumluluk Kontrolü**:
-  - [ ] Breaking change yapmaktan kaçının, yapılması gerekiyorsa eski metotları [Obsolete] ile işaretleyin
-  - [ ] Interface değişiklikleri öncesi tüm implementasyonları kontrol edin
-  - [ ] Interface'e yeni metot eklerken tüm implementasyonları güncelleyin
-
-### 8.4 Namespace ve Tip Yönetimi
-- **Namespace Çakışma Önlemleri**:
-  - Aynı isimde interface'ler farklı ad alanlarında olmamalı
-  - Repository pattern için tutarlı namespace 
-
-### 8.5 Kod Değişikliği ve Bağımlılık Yönetimi
-
-- **Değişiklik Öncesi Kontrol Listesi**:
-  - [ ] Değişiklik yapılacak dosya ve ilgili bağımlılıklar tespit edilmeli
-  - [ ] Değişikliğin etkileyeceği diğer katmanlar belirlenmeli
-  - [ ] Interface, servis ve repository bağımlılıkları kontrol edilmeli
-  - [ ] DI kayıtları ve servis konfigürasyonları gözden geçirilmeli
-
-- **Değişiklik Sırası ve Kontrol Mekanizması**:
-  1. **Bağımlılık Analizi**:
-     - Değişen class/interface/method isimleri solution-wide taranmalı
-     - Bağımlı dosyalar ve referanslar listelenmeli
-     - Interface implementasyonları kontrol edilmeli
-     - DI kayıtları gözden geçirilmeli
-
-  2. **Kod Güncelleme**:
-     - Değişiklikler yapılırken bağımlı dosyalar da güncellenmeli
-     - Interface değişikliklerinde tüm implementasyonlar kontrol edilmeli
-     - Namespace ve using direktifleri düzenlenmeli
-
-  3. **Derleme Kontrolü**:
-     - Her değişiklik sonrası `dotnet build` ile solution derlenmeli
-     - Derleme hataları varsa migration/test adımına geçilmemeli
-     - Hatalar çözülmeden sonraki adıma geçilmemeli
-
-  4. **Migration ve Test**:
-     - Derleme başarılı ise migration işlemi başlatılmalı
-     - Migration öncesi veritabanı yedekleme kontrolü yapılmalı
-     - Test senaryoları güncellenmeli ve çalıştırılmalı
-
-- **Otomatik Kontrol Mekanizması**:
-  ```csharp
-  // Örnek kontrol mekanizması
-  public class CodeChangeValidator
-  {
-      public bool ValidateChange(string changedFile)
-      {
-          // 1. Bağımlılık kontrolü
-          var dependencies = FindDependencies(changedFile);
-          
-          // 2. Interface implementasyon kontrolü
-          var implementations = CheckInterfaceImplementations(changedFile);
-          
-          // 3. DI kayıt kontrolü
-          var diRegistrations = ValidateDIRegistrations(changedFile);
-          
-          // 4. Derleme kontrolü
-          var buildResult = BuildSolution();
-          
-          return buildResult.Success;
-      }
-  }
-  ```
-
-- **Hata Önleme Stratejileri**:
-  - Her değişiklik için ayrı branch oluşturulmalı
-  - Değişiklikler küçük, test edilebilir parçalar halinde yapılmalı
-  - Her adımda commit yapılmalı ve test edilmeli
-  - Breaking change'ler için önceden planlama yapılmalı
-
-- **Dokümantasyon Gereksinimleri**:
-  - Değişiklik yapılan dosyaların listesi tutulmalı
-  - Bağımlı dosyalar ve etkilenen katmanlar belgelenmeli
-  - Breaking change'ler açıkça belirtilmeli
-  - Migration stratejisi dokümante edilmeli
-
-- **Code Review Kontrol Listesi**:
-  - [ ] Bağımlılık analizi yapıldı mı?
-  - [ ] Tüm bağımlı dosyalar güncellendi mi?
-  - [ ] Interface değişiklikleri tüm implementasyonlara yansıtıldı mı?
-  - [ ] DI kayıtları güncellendi mi?
-  - [ ] Solution hatasız derleniyor mu?
-  - [ ] Test senaryoları güncellendi mi?
-  - [ ] Migration stratejisi belirlendi mi?
-  - [ ] Breaking change'ler dokümante edildi mi?
-
-
-
-"Önce Anla, Sonra Uygula" Kuralı
-Araştırma Aşaması:
-Mevcut dosyaları ve yapıyı incele
-Projenin ihtiyaçlarını anla
-Mevcut konfigürasyonları kontrol et
-Bağımlılıkları ve ilişkileri belirle
-Bilgilendirme Aşaması:
-Bulguları kullanıcıya açıkla
-Mevcut durumu özetle
-Olası çözümleri sun
-Avantaj ve dezavantajları belirt
-Onay Aşaması:
-Kullanıcının tercihini sor
-Önerilen çözümü onaylat
-Alternatifleri sun (eğer varsa)
-Kullanıcının kararını bekle
-Uygulama Aşaması:
-Onay alındıktan sonra işleme başla
-Adımları sırayla uygula
-Her adımda bilgi ver
-Sonucu raporla
+Bu prosedür, kod tabanındaki Türkçe/İngilizce isim karmaşasının çözülmesi ve istikrarlı bir şekilde İngilizce teknik kodlara geçiş yapılması için kullanılacaktır. 
